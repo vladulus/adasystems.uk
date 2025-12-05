@@ -1,0 +1,214 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Device;
+use App\Models\Vehicle;
+use Illuminate\Http\Request;
+
+class DeviceController extends Controller
+{
+    /**
+     * Listă de devices cu filtre simple.
+     */
+    public function index(Request $request)
+    {
+        $this->authorize('viewAny', Device::class);
+
+        $query = Device::with('vehicle');
+
+        // search simplu
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('device_name', 'like', "%{$search}%")
+                  ->orWhere('serial_number', 'like', "%{$search}%")
+                  ->orWhere('ip_address', 'like', "%{$search}%")
+                  ->orWhereHas('vehicle', function ($q2) use ($search) {
+                      $q2->where('registration_number', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // filtrare status
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+
+        // filtrare assignment (assigned / unassigned)
+        if ($request->filled('assignment')) {
+            if ($request->get('assignment') === 'assigned') {
+                $query->whereHas('vehicle');
+            } elseif ($request->get('assignment') === 'unassigned') {
+                $query->whereDoesntHave('vehicle');
+            }
+        }
+
+        // sortare
+        $sortField = $request->get('sort', 'created_at');
+        $sortOrder = $request->get('order', 'desc');
+        $query->orderBy($sortField, $sortOrder);
+
+        $devices = $query->paginate($request->get('per_page', 15))
+            ->appends($request->except('page'));
+
+        $stats = $this->getDeviceStatistics();
+
+        return view('management.devices.index', compact('devices', 'stats'));
+    }
+
+    /**
+     * Formular "add device".
+     */
+    public function create()
+    {
+        $this->authorize('create', Device::class);
+
+        // vehicule neatribuite (sau deja legate de device curent, în cazul editului – aici doar neatribuite)
+        $vehicles = Vehicle::select('id', 'registration_number', 'make', 'model')
+            ->when(auth()->user()->hasRole('client'), function ($q) {
+                // dacă ai logică de client -> vehiculele lui
+                $q->where('created_by', auth()->id());
+            })
+            ->whereDoesntHave('device')
+            ->orderBy('registration_number')
+            ->get();
+
+        return view('management.devices.create', compact('vehicles'));
+    }
+
+    /**
+     * Salvează un device nou.
+     */
+    public function store(Request $request)
+    {
+        $this->authorize('create', Device::class);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'serial_number' => ['nullable', 'string', 'max:255', 'unique:devices,serial_number'],
+            'status' => ['required', 'in:active,inactive,maintenance'],
+            'vehicle_id' => ['nullable', 'exists:vehicles,id'],
+        ]);
+
+        $device = Device::create([
+            'device_name'   => $validated['name'],
+            'serial_number' => $validated['serial_number'] ?? null,
+            'owner_id'      => auth()->id(),
+            'status'        => $validated['status'],
+        ]);
+
+        // leagă device-ul de vehicul, dacă s-a selectat unul
+        if (!empty($validated['vehicle_id'])) {
+            Vehicle::where('id', $validated['vehicle_id'])
+                ->update(['device_id' => $device->id]);
+        }
+
+        return redirect()
+            ->route('management.devices.index')
+            ->with('success', 'Device created successfully.');
+    }
+
+    /**
+     * Formular "edit device".
+     */
+    public function edit(Device $device)
+    {
+        $this->authorize('update', $device);
+
+        $vehicles = Vehicle::select('id', 'registration_number', 'make', 'model')
+            ->when(auth()->user()->hasRole('client'), function ($q) {
+                $q->where('created_by', auth()->id());
+            })
+            // vehicule neatribuite SAU cel care e deja legat de device-ul curent
+            ->where(function ($q) use ($device) {
+                $q->whereNull('device_id')
+                  ->orWhere('device_id', $device->id);
+            })
+            ->orderBy('registration_number')
+            ->get();
+
+        return view('management.devices.edit', compact('device', 'vehicles'));
+    }
+
+    /**
+     * Update device.
+     */
+    public function update(Request $request, Device $device)
+    {
+        $this->authorize('update', $device);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'serial_number' => [
+                'nullable',
+                'string',
+                'max:255',
+                'unique:devices,serial_number,' . $device->id,
+            ],
+            'status' => ['required', 'in:active,inactive,maintenance'],
+            'vehicle_id' => ['nullable', 'exists:vehicles,id'],
+        ]);
+
+        $device->update([
+            'device_name'   => $validated['name'],
+            'serial_number' => $validated['serial_number'] ?? null,
+            'status'        => $validated['status'],
+        ]);
+
+        // curățăm device_id de pe toate vehiculele unde era device-ul ăsta
+        Vehicle::where('device_id', $device->id)->update(['device_id' => null]);
+
+        // dacă s-a ales un vehicul nou, îl legăm
+        if (!empty($validated['vehicle_id'])) {
+            Vehicle::where('id', $validated['vehicle_id'])
+                ->update(['device_id' => $device->id]);
+        }
+
+        return redirect()
+            ->route('management.devices.index')
+            ->with('success', 'Device updated successfully.');
+    }
+
+    /**
+     * Șterge device.
+     */
+    public function destroy(Device $device)
+    {
+        $this->authorize('delete', $device);
+
+        // scoatem legătura cu vehicle
+        Vehicle::where('device_id', $device->id)->update(['device_id' => null]);
+
+        $device->delete();
+
+        return redirect()
+            ->route('management.devices.index')
+            ->with('success', 'Device deleted successfully.');
+    }
+
+    /**
+     * Statistici simple pentru cardul din dreapta.
+     */
+    private function getDeviceStatistics()
+    {
+        $query = Device::query();
+
+        if (auth()->user()->hasRole('client')) {
+            $query->whereHas('vehicle', function ($q) {
+                $q->where('created_by', auth()->id());
+            });
+        }
+
+        $base = clone $query;
+
+        return [
+            'total'       => $base->count(),
+            'active'      => (clone $base)->where('status', 'active')->count(),
+            'inactive'    => (clone $base)->where('status', 'inactive')->count(),
+            'maintenance' => (clone $base)->where('status', 'maintenance')->count(),
+            'unassigned'  => (clone $base)->whereDoesntHave('vehicle')->count(),
+            'assigned'    => (clone $base)->whereHas('vehicle')->count(),
+        ];
+    }
+}
