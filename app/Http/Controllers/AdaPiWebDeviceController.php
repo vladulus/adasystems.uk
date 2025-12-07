@@ -139,12 +139,19 @@ class AdaPiWebDeviceController extends Controller
         $prev = null;
 
         foreach ($telemetry as $t) {
-            if ($t->latitude && $t->longitude && $prev) {
+            // Skip if current has no valid coords
+            if (!$t->latitude || !$t->longitude) {
+                continue;
+            }
+        
+            // Calculate distance only if prev also has valid coords
+            if ($prev && $prev->latitude && $prev->longitude) {
                 $distance += $this->haversine(
                     $prev->latitude, $prev->longitude,
                     $t->latitude, $t->longitude
                 );
             }
+            
             $prev = $t;
         }
 
