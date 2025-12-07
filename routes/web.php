@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ManagementController;
@@ -9,6 +11,7 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\AdaPiWebDeviceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,25 +57,77 @@ Route::get('/password/request', [AuthController::class, 'showPasswordRequest'])
     ->name('password.request')
     ->middleware('guest');
 
+// Password reset email POST
+Route::post('/password/email', [AuthController::class, 'sendPasswordResetLink'])
+    ->name('password.email')
+    ->middleware('guest');
+
 // =============================
-// PROTECTED DASHBOARD
+// PROTECTED DASHBOARD & MANAGEMENT
 // =============================
 Route::middleware('auth')->group(function () {
+
+    // =============================
+    // ADA-PI: ACCEPT / REFUSE DEVICES
+    // =============================
+    Route::middleware('role:super-admin|admin')->group(function () {
+        Route::post(
+            '/ada-pi/devices/{device}/accept',
+            [AdaPiWebDeviceController::class, 'accept']
+        )->name('ada-pi.devices.accept');
+
+        Route::post(
+            '/ada-pi/devices/{device}/refuse',
+            [AdaPiWebDeviceController::class, 'refuse']
+        )->name('ada-pi.devices.refuse');
+    });
+
+    // =============================
+    // ADA-PI: DEVICE DASHBOARD
+    // =============================
+    Route::get(
+        '/ada-pi/devices/{device}',
+        [AdaPiWebDeviceController::class, 'show']
+    )->name('ada-pi.devices.show');
+
+    Route::get(
+        '/ada-pi/devices/{device}/live',
+        [AdaPiWebDeviceController::class, 'liveData']
+    )->name('ada-pi.devices.live');
+	
+	Route::post(
+        '/ada-pi/devices/{device}/interval',
+        [AdaPiWebDeviceController::class, 'updateInterval']
+    )->name('ada-pi.devices.interval');
+	
+	Route::middleware('auth:api')->prefix('ada-pi')->group(function () {
+    Route::post('/device/status', [AdaPiDeviceStatusController::class, 'status']);
+    });
 
     // HUB – pagina cu 2 carduri (Management + Pi)
     Route::get('/hub', function () {
         return view('app-hub');
     })->name('hub');
 
-    // Management dashboard (pagina cu Devices / Vehicles / Users / Drivers)
+    // Management dashboard - redirect to management index
     Route::get('/dashboard', function () {
-        return view('dashboard');
+        return redirect()->route('management.index');
     })->name('dashboard');
 
     // =============================
     // MANAGEMENT ROUTES
     // =============================
     Route::prefix('management')->name('management.')->group(function () {
+
+        // Autocomplete routes
+        Route::prefix('autocomplete')->name('autocomplete.')->group(function () {
+            Route::get('/global', [App\Http\Controllers\AutocompleteController::class, 'global'])->name('global');
+            Route::get('/devices', [App\Http\Controllers\AutocompleteController::class, 'devices'])->name('devices');
+            Route::get('/vehicles', [App\Http\Controllers\AutocompleteController::class, 'vehicles'])->name('vehicles');
+            Route::get('/users', [App\Http\Controllers\AutocompleteController::class, 'users'])->name('users');
+            Route::get('/drivers', [App\Http\Controllers\AutocompleteController::class, 'drivers'])->name('drivers');
+        });
+
 
         // Management home (tabs page) – doar super-admin / admin
         Route::get('/', [ManagementController::class, 'index'])
@@ -235,7 +290,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // =============================
-// CONTACT PAGES
+// CONTACT PAGES (public)
 // =============================
 Route::get('/contact', [ContactController::class, 'show'])
     ->name('contact.show');

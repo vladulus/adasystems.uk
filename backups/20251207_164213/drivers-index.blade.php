@@ -4,23 +4,11 @@
 
 @section('styles')
 <style>
-.page-wrapper {
-    max-width:1400px;
-    margin:0 auto;
-    padding:24px 16px 40px;
-}
-.header-card {
-    background:#fff;
-    border-radius:18px;
-    padding:16px 20px;
-    margin-bottom:18px;
-    box-shadow:0 18px 55px rgba(129,140,248,0.3);
-}
 .page-header {
     display:flex;
     justify-content:space-between;
-    align-items:center;
-    gap:16px;
+    align-items:flex-start;
+    margin-bottom:1.5rem;
 }
 .page-title {
     font-size:1.75rem;
@@ -111,7 +99,6 @@
     padding:16px 20px;
     margin-bottom:1rem;
     box-shadow:0 18px 55px rgba(129,140,248,0.3);
-    overflow:visible;
 }
 .search-form {
     display:flex;
@@ -454,34 +441,30 @@
 @endsection
 
 @section('content')
-<div class="page-wrapper">
-    <!-- Header -->
-    <div class="header-card">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Drivers</h1>
-                <p class="page-subtitle">
-                    Manage drivers, licenses and vehicle assignments.
-                </p>
-            </div>
-
-            <div class="page-header-actions">
-                <a href="{{ route('management.index') }}" class="btn btn-secondary btn-icon">
-                    <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
-                </a>
-
-                @can('create', App\Models\Driver::class)
-                    <a href="{{ route('management.drivers.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                        <span>Add driver</span>
-                    </a>
-                @endcan
-            </div>
-        </div>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Drivers</h1>
+        <p class="page-subtitle">
+            Manage drivers, licenses and vehicle assignments.
+        </p>
     </div>
 
-    {{-- Search card --}}
+    <div class="page-header-actions">
+        <a href="{{ route('management.index') }}" class="btn btn-secondary btn-icon">
+            <i class="fas fa-th-large"></i>
+            <span>Dashboard</span>
+        </a>
+
+        @can('create', App\Models\Driver::class)
+            <a href="{{ route('management.drivers.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                <span>Add driver</span>
+            </a>
+        @endcan
+    </div>
+</div>
+
+{{-- Search card --}}
 <div class="card card-search">
     <form action="{{ route('management.drivers.index') }}" method="GET" class="search-form" id="searchForm">
         <div class="search-row">
@@ -751,7 +734,6 @@
             </div>
         </div>
     </div>
-</div>
 </div>
 @endsection
 

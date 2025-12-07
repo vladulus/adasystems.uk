@@ -9,7 +9,7 @@
     margin:0 auto;
     padding:24px 16px 40px;
 }
-.header-card {
+.card-header {
     background:#fff;
     border-radius:18px;
     padding:16px 20px;
@@ -456,7 +456,7 @@
 @section('content')
 <div class="page-wrapper">
     <!-- Header -->
-    <div class="header-card">
+    <div class="card card-header">
         <div class="page-header">
             <div>
                 <h1 class="page-title">Drivers</h1>

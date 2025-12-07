@@ -5,40 +5,32 @@
 @section('content')
 <div class="page-wrapper">
     {{-- Header --}}
-    <div class="header-card">
-        <div class="page-header">
+    <div class="page-header">
+        <div class="page-header-left">
+            <a href="{{ route('hub') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Hub</span>
+            </a>
             <div>
                 <h1 class="page-title">ADA-Pi Devices</h1>
-                <p class="page-subtitle">Monitor and manage connected Pi devices.</p>
-            </div>
-
-            <div class="page-header-actions">
-                <a href="{{ route('hub') }}" class="btn btn-secondary btn-icon">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Back to Hub</span>
-                </a>
             </div>
         </div>
-    </div>
 
-    {{-- Search card --}}
-    <div class="card card-search">
-        <form class="search-form" onsubmit="return false;">
-            <div class="search-row">
+        <div class="page-header-actions">
+            {{-- Search --}}
+            <form class="devices-search-form" onsubmit="return false;">
                 <div class="search-input-wrapper">
-                    <span class="search-icon">
-                        <i class="fas fa-search"></i>
-                    </span>
+                    <i class="fas fa-search search-icon"></i>
                     <input
                         type="text"
                         id="piDevicesSearch"
-                        class="search-input"
+                        class="input input-search"
                         placeholder="Search devices, vehicles or super users..."
                         autocomplete="off"
                     >
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
     {{-- Devices grid --}}
@@ -193,39 +185,43 @@
 
 <style>
     .page-wrapper {
-        max-width: 1400px;
+        max-width: 1200px;
         margin: 0 auto;
         padding: 24px 16px 40px;
-    }
-
-    .card {
-        background: #ffffff;
-        border-radius: 18px;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        box-shadow: 0 18px 45px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(148, 163, 184, 0.18);
-        margin-bottom: 18px;
-        overflow: hidden;
-    }
-
-    .header-card {
-        padding: 16px 20px;
-        margin-bottom: 18px;
-        background: #ffffff;
-        border-radius: 18px;
-        box-shadow: 0 18px 45px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(148, 163, 184, 0.18);
-    }
-
-    .card-search {
-        padding: 16px 20px;
-        overflow: visible;
-        margin-bottom: 18px;
     }
 
     .page-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         gap: 16px;
+        margin-bottom: 18px;
+    }
+
+    .page-header-left {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #6b7280;
+        text-decoration: none;
+        padding: 6px 0;
+        transition: color 0.15s ease;
+    }
+
+    .back-link:hover {
+        color: #4f46e5;
+    }
+
+    .back-link i {
+        font-size: 11px;
     }
 
     .page-header-actions {
@@ -235,74 +231,69 @@
     }
 
     .page-title {
-        font-size: 24px;
-        font-weight: 600;
-        margin: 0;
-        color: #111827;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: #0f172a;
     }
 
-    .page-subtitle {
-        font-size: 14px;
-        margin-top: 4px;
-        color: #6b7280;
-    }
-
-    .search-form {
+    .devices-search-form {
         display: flex;
-        flex-direction: column;
-        gap: 0;
-    }
-
-    .search-row {
-        display: flex;
-        gap: 12px;
         align-items: center;
+        gap: 8px;
     }
 
     .search-input-wrapper {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        border-radius: 999px;
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        padding: 0 12px;
+        position: relative;
+        width: 260px;
     }
 
     .search-icon {
-        margin-right: 8px;
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 13px;
         color: #9ca3af;
-        display: flex;
-        align-items: center;
     }
 
-    .search-input {
-        border: none;
-        background: transparent;
-        font-size: 14px;
-        padding: 10px 4px;
+    .input {
         width: 100%;
+        border-radius: 999px;
+        border: 1px solid #e5e7eb;
+        padding: 8px 12px;
+        padding-left: 30px;
+        font-size: 13px;
+        color: #111827;
+        background: #f9fafb;
+        transition: all 0.15s ease;
+    }
+
+    .input:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
         outline: none;
+        background: #ffffff;
+    }
+
+    .input-search {
+        min-width: 220px;
     }
 
     .btn {
         border-radius: 999px;
-        padding: 0.5rem 1.1rem;
+        padding: 8px 14px;
         border: 1px solid transparent;
-        font-size: 0.85rem;
+        font-size: 13px;
         font-weight: 500;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.35rem;
+        gap: 6px;
         cursor: pointer;
         text-decoration: none;
         transition: all 0.15s ease;
         white-space: nowrap;
-    }
-
-    .btn i {
-        font-size: 0.9rem;
     }
 
     .btn-sm {
@@ -312,30 +303,14 @@
     }
 
     .btn-primary {
-        background: #2563eb;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
         color: #ffffff;
-        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.35);
     }
 
     .btn-primary:hover {
-        background: #1d4ed8;
         transform: translateY(-1px);
         box-shadow: 0 14px 30px rgba(79, 70, 229, 0.45);
-    }
-
-    .btn-secondary {
-        background: #ffffff;
-        color: #374151;
-        border: 1px solid #e5e7eb;
-    }
-
-    .btn-secondary:hover {
-        background: #f9fafb;
-        border-color: #d1d5db;
-    }
-
-    .btn-icon {
-        gap: 0.5rem;
     }
 
     .btn-danger {

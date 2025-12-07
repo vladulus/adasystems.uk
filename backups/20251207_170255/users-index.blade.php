@@ -1,36 +1,34 @@
 @extends('layouts.app')
 
-@section('title', 'Devices')
+@section('title', 'Users')
 
 @section('content')
 <div class="page-wrapper">
     <!-- Header -->
-    <div class="header-card">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Devices</h1>
-                <p class="page-subtitle">Manage tracking devices, Serials numbers and assignments.</p>
-            </div>
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Users</h1>
+            <p class="page-subtitle">Manage platform users, roles and access.</p>
+        </div>
 
-            <div class="page-header-actions">
-                {{-- Dashboard button --}}
-                <a href="{{ route('management.index') }}" class="btn btn-secondary btn-icon">
-                    <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
-                </a>
+        <div class="page-header-actions">
+            {{-- Dashboard button --}}
+            <a href="{{ route('management.index') }}" class="btn btn-secondary btn-icon">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
 
-                {{-- Add device --}}
-                <a href="{{ route('management.devices.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Device</span>
-                </a>
-            </div>
+            {{-- Add user --}}
+            <a href="{{ route('management.users.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                <span>Add User</span>
+            </a>
         </div>
     </div>
 
     {{-- Search card --}}
     <div class="card card-search">
-        <form action="{{ route('management.devices.index') }}" method="GET" class="search-form" id="searchForm">
+        <form action="{{ route('management.users.index') }}" method="GET" class="search-form" id="searchForm">
             <div class="search-row">
                 <div class="search-input-container">
                     <div class="search-input-wrapper">
@@ -42,7 +40,7 @@
                             name="search"
                             id="searchInput"
                             class="search-input"
-                            placeholder="Search by name, serial number, IMEI, vehicle..."
+                            placeholder="Search by name, email, phone..."
                             value="{{ request('search') }}"
                             autocomplete="off"
                         >
@@ -61,7 +59,7 @@
                         <span>Search</span>
                     </button>
                     @if(request('search'))
-                        <a href="{{ route('management.devices.index') }}" class="btn btn-ghost">
+                        <a href="{{ route('management.users.index') }}" class="btn btn-ghost">
                             <i class="fas fa-times"></i>
                             <span>Clear</span>
                         </a>
@@ -70,26 +68,65 @@
             </div>
         </form>
     </div>
+	    @if (session('error'))
+        <div style="margin-bottom:10px;">
+            <div style="
+                display:inline-flex;
+                align-items:center;
+                padding:8px 12px;
+                border-radius:999px;
+                background:#fee2e2;
+                color:#b91c1c;
+                font-size:13px;
+            ">
+                {{ session('error') }}
+            </div>
+        </div>
+    @endif
 
     {{-- Filters --}}
     <div class="card filters-card">
-        <form action="{{ route('management.devices.index') }}" method="GET" class="filters-grid">
+        <form action="{{ route('management.users.index') }}" method="GET" class="filters-grid">
+            <div class="filter-group">
+                <label class="filter-label">Role</label>
+                <select name="role" class="input">
+                    <option value="">All roles</option>
+                    @foreach($roles as $role)
+                        <option value="{{ $role->name }}" {{ request('role') === $role->name ? 'selected' : '' }}>
+                            {{ ucfirst($role->name) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
             <div class="filter-group">
                 <label class="filter-label">Status</label>
                 <select name="status" class="input">
                     <option value="">All</option>
                     <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                    <option value="maintenance" {{ request('status') === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                    <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
                 </select>
             </div>
 
             <div class="filter-group">
-                <label class="filter-label">Assignment</label>
-                <select name="assignment" class="input">
+                <label class="filter-label">Email verification</label>
+                <select name="email_verified" class="input">
                     <option value="">All</option>
-                    <option value="assigned" {{ request('assignment') === 'assigned' ? 'selected' : '' }}>Assigned to vehicle</option>
-                    <option value="unassigned" {{ request('assignment') === 'unassigned' ? 'selected' : '' }}>Unassigned</option>
+                    <option value="verified" {{ request('email_verified') === 'verified' ? 'selected' : '' }}>Verified</option>
+                    <option value="unverified" {{ request('email_verified') === 'unverified' ? 'selected' : '' }}>Unverified</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Department</label>
+                <select name="department" class="input">
+                    <option value="">All</option>
+                    @foreach($departments as $dep)
+                        <option value="{{ $dep }}" {{ request('department') === $dep ? 'selected' : '' }}>
+                            {{ $dep }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
 
@@ -113,107 +150,131 @@
                 >
             </div>
 
+            <div class="filter-group">
+                <label class="filter-label">Last login</label>
+                <select name="last_login" class="input">
+                    <option value="">Any time</option>
+                    <option value="today" {{ request('last_login') === 'today' ? 'selected' : '' }}>Today</option>
+                    <option value="week" {{ request('last_login') === 'week' ? 'selected' : '' }}>Last 7 days</option>
+                    <option value="month" {{ request('last_login') === 'month' ? 'selected' : '' }}>Last 30 days</option>
+                    <option value="never" {{ request('last_login') === 'never' ? 'selected' : '' }}>Never</option>
+                </select>
+            </div>
+
             <div class="filters-actions">
                 <button type="submit" class="btn btn-primary btn-sm w-100">Apply filters</button>
-                <a href="{{ route('management.devices.index') }}" class="btn btn-ghost btn-sm w-100">Reset</a>
+                <a href="{{ route('management.users.index') }}" class="btn btn-ghost btn-sm w-100">Reset</a>
             </div>
         </form>
     </div>
 
-    {{-- Main content --}}
+    {{-- Main content: users list + overview --}}
     <div class="content-grid">
-        {{-- Devices list --}}
-        <div class="card devices-card">
-            <div class="devices-card-header">
-                <h2 class="section-title">Devices list</h2>
-                @if(isset($devices) && $devices instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                    <span class="section-meta">
-                        Showing {{ $devices->firstItem() }}–{{ $devices->lastItem() }} of {{ $devices->total() }} devices
-                    </span>
-                @endif
+        {{-- Users list --}}
+        <div class="card users-card">
+            <div class="users-card-header">
+                <h2 class="section-title">Users list</h2>
+                <span class="section-meta">
+                    Showing {{ $users->firstItem() }}–{{ $users->lastItem() }} of {{ $users->total() }} users
+                </span>
             </div>
 
-            <div class="devices-table">
-                <div class="devices-table-head">
-                    <div class="col-name">Device & Serial</div>
-                    <div class="col-vehicle">Vehicle</div>
+            <div class="users-table">
+                <div class="users-table-head">
+                    <div class="col-name">Name & email</div>
+                    <div class="col-role">Role</div>
                     <div class="col-status">Status</div>
+                    <div class="col-last-login">Last login</div>
                     <div class="col-created">Created</div>
                     <div class="col-actions">Actions</div>
                 </div>
 
-                @forelse($devices as $device)
-                    <div class="devices-table-row">
+                @forelse($users as $user)
+                    <div class="users-table-row">
                         <div class="col-name">
-                            <div class="avatar-square">
-                                <i class="fas fa-microchip"></i>
+                            <div class="avatar-circle">
+                                {{ strtoupper(substr($user->name, 0, 1)) }}
                             </div>
-                            <div class="device-main">
-                                <div class="device-name">{{ $device->name ?? 'Unnamed device' }}</div>
-                                <div class="device-meta">
-                                    Serial number: {{ $device->serial_number ?? '—' }}
-                                </div>
+                            <div class="user-main">
+                                <div class="user-name">{{ $user->name }}</div>
+                                <div class="user-email">{{ $user->email }}</div>
                             </div>
                         </div>
 
-                        <div class="col-vehicle">
-                            @php
-                                $plate = optional($device->vehicle)->registration_number ?? null;
-                            @endphp
-                            @if($plate)
-                                <span class="badge badge-vehicle">{{ $plate }}</span>
+                        <div class="col-role">
+                            @if($user->roles->first())
+                                <span class="badge badge-role">
+                                    {{ ucfirst($user->roles->first()->name) }}
+                                </span>
                             @else
-                                <span class="badge badge-muted">Unassigned</span>
+                                <span class="badge badge-muted">No role</span>
                             @endif
                         </div>
 
                         <div class="col-status">
-                            @php $status = $device->status ?? 'inactive'; @endphp
-                            @if($status === 'active')
+                            @if($user->status === 'active')
                                 <span class="badge badge-success">Active</span>
-                            @elseif($status === 'maintenance')
-                                <span class="badge badge-warning">Maintenance</span>
-                            @else
+                            @elseif($user->status === 'inactive')
                                 <span class="badge badge-muted">Inactive</span>
+                            @else
+                                <span class="badge badge-warning">Pending</span>
+                            @endif
+                        </div>
+
+                        <div class="col-last-login">
+                            @if($user->last_login_at)
+                                {{ $user->last_login_at->diffForHumans() }}
+                            @else
+                                Never
                             @endif
                         </div>
 
                         <div class="col-created">
-                            @if(isset($device->created_at) && $device->created_at)
-                                {{ $device->created_at->format('Y-m-d') }}
-                            @else
-                                —
-                            @endif
+                            {{ $user->created_at->format('Y-m-d') }}
                         </div>
 
-                        <div class="col-actions">
-                            <a href="{{ route('management.devices.edit', $device) }}" class="btn btn-light btn-xs">
-                                Edit
-                            </a>
+                      <div class="col-actions">
+                          @if($user->isRoot())
+                              {{-- Pentru contul root (vlad@impulsive.ro) NU arătăm niciun buton --}}
+                              <span class="badge badge-muted">Root</span>
+                          @else
+                              {{-- PERM button – vizibil mereu, autorizarea se face în controller --}}
+                              <a href="{{ route('management.permissions.edit', $user) }}" class="btn btn-warning btn-xs">
+                                  PERM
+                              </a>
 
-                            <form
-                                action="{{ route('management.devices.destroy', $device) }}"
-                                method="POST"
-                                style="display:inline-block;"
-                                onsubmit="return confirm('Are you sure you want to delete this device?');"
-                            >
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-xs">
-                                    Delete
-                                </button>
-                            </form>
-                        </div>
+                              {{-- Edit button – vizibil mereu, autorizarea se face în controller / middleware --}}
+                              <a href="{{ route('management.users.edit', $user) }}" class="btn btn-light btn-xs">
+                                  Edit
+                              </a>
+
+                              {{-- Delete button – vizibil mereu, dar nu la propriul cont --}}
+                              @if(auth()->id() !== $user->id)
+                                  <form
+                                      action="{{ route('management.users.destroy', $user) }}"
+                                      method="POST"
+                                      style="display:inline-block;"
+                                      onsubmit="return confirm('Are you sure you want to delete this user?');"
+                                  >
+                                      @csrf
+                                      @method('DELETE')
+                                      <button type="submit" class="btn btn-danger btn-xs">
+                                          Delete
+                                      </button>
+                                  </form>
+                              @endif
+                          @endif
+                      </div>  
                     </div>
                 @empty
-                    <div class="devices-empty">
-                        <p>No devices found with the current filters.</p>
+                    <div class="users-empty">
+                        <p>No users found with the current filters.</p>
                     </div>
                 @endforelse
             </div>
 
-            <div class="devices-pagination">
-                {{ $devices->links() }}
+            <div class="users-pagination">
+                {{ $users->links() }}
             </div>
         </div>
 
@@ -221,31 +282,38 @@
         <div class="card overview-card">
             <h2 class="section-title">Overview</h2>
 
-            @php
-                $devStats = $stats['devices'] ?? [
-                    'total' => $devices->total() ?? 0,
-                    'active' => 0,
-                    'inactive' => 0,
-                    'maintenance' => 0,
-                ];
-            @endphp
-
             <div class="overview-grid">
                 <div class="overview-item">
-                    <span class="label">Total devices</span>
-                    <span class="value">{{ $devStats['total'] }}</span>
+                    <span class="label">Total users</span>
+                    <span class="value">{{ $stats['total'] }}</span>
                 </div>
                 <div class="overview-item">
                     <span class="label">Active</span>
-                    <span class="value text-green">{{ $devStats['active'] }}</span>
+                    <span class="value text-green">{{ $stats['active'] }}</span>
                 </div>
                 <div class="overview-item">
                     <span class="label">Inactive</span>
-                    <span class="value">{{ $devStats['inactive'] }}</span>
+                    <span class="value">{{ $stats['inactive'] }}</span>
                 </div>
                 <div class="overview-item">
-                    <span class="label">Maintenance</span>
-                    <span class="value text-orange">{{ $devStats['maintenance'] }}</span>
+                    <span class="label">Pending</span>
+                    <span class="value text-orange">{{ $stats['pending'] }}</span>
+                </div>
+                <div class="overview-item">
+                    <span class="label">Admins</span>
+                    <span class="value">{{ $stats['admins'] }}</span>
+                </div>
+                <div class="overview-item">
+                    <span class="label">Verified emails</span>
+                    <span class="value">{{ $stats['email_verified'] }}</span>
+                </div>
+                <div class="overview-item">
+                    <span class="label">Logged in today</span>
+                    <span class="value">{{ $stats['logged_in_today'] }}</span>
+                </div>
+                <div class="overview-item">
+                    <span class="label">Created this month</span>
+                    <span class="value">{{ $stats['created_this_month'] }}</span>
                 </div>
             </div>
         </div>
@@ -259,19 +327,12 @@
         padding: 24px 16px 40px;
     }
 
-    .header-card {
-        padding: 16px 20px;
-        margin-bottom: 18px;
-        background: #ffffff;
-        border-radius: 18px;
-        box-shadow: 0 18px 45px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(148, 163, 184, 0.18);
-    }
-
     .page-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         gap: 16px;
+        margin-bottom: 18px;
     }
 
     .page-title {
@@ -294,7 +355,7 @@
         justify-content: flex-end;
     }
 
-    .devices-search-form {
+    .users-search-form {
         display: flex;
         gap: 6px;
         align-items: center;
@@ -388,6 +449,16 @@
 
     .btn-danger:hover {
         background: #fecaca;
+    }
+
+    .btn-warning {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: #fde68a;
+    }
+
+    .btn-warning:hover {
+        background: #fde68a;
     }
 
     .btn-sm {
@@ -602,11 +673,11 @@
         gap: 16px;
     }
 
-    .devices-card {
+    .users-card {
         padding: 12px 0 8px;
     }
 
-    .devices-card-header {
+    .users-card-header {
         padding: 0 18px 8px;
         display: flex;
         justify-content: space-between;
@@ -624,20 +695,20 @@
         color: #9ca3af;
     }
 
-    .devices-table {
+    .users-table {
         border-top: 1px solid #e5e7eb;
     }
 
-    .devices-table-head,
-    .devices-table-row {
+    .users-table-head,
+    .users-table-row {
         display: grid;
-        grid-template-columns: 2.4fr 1.3fr 1fr 1.2fr 1.5fr;
+        grid-template-columns: 2fr 1fr 0.9fr 1.1fr 1.1fr 1.8fr;
         padding: 10px 18px;
         align-items: center;
         column-gap: 10px;
     }
 
-    .devices-table-head {
+    .users-table-head {
         font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -645,16 +716,16 @@
         background: #f9fafb;
     }
 
-    .devices-table-row {
+    .users-table-row {
         border-top: 1px solid #f3f4f6;
         font-size: 13px;
     }
 
-    .devices-table-row:nth-child(even) {
+    .users-table-row:nth-child(even) {
         background: #fcfcff;
     }
 
-    .devices-table-row:hover {
+    .users-table-row:hover {
         background: #f5f7ff;
     }
 
@@ -665,34 +736,35 @@
         min-width: 0;
     }
 
-    .avatar-square {
+    .avatar-circle {
         width: 32px;
         height: 32px;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #0ea5e9, #6366f1);
+        border-radius: 999px;
+        background: linear-gradient(135deg, #a855f7, #6366f1);
         color: #ffffff;
         font-size: 14px;
+        font-weight: 600;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
     }
 
-    .device-main {
+    .user-main {
         display: flex;
         flex-direction: column;
         gap: 2px;
         min-width: 0;
     }
 
-    .device-name {
+    .user-name {
         font-weight: 500;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .device-meta {
+    .user-email {
         font-size: 12px;
         color: #6b7280;
         white-space: nowrap;
@@ -700,8 +772,9 @@
         text-overflow: ellipsis;
     }
 
-    .col-vehicle,
+    .col-role,
     .col-status,
+    .col-last-login,
     .col-created,
     .col-actions {
         font-size: 13px;
@@ -714,13 +787,13 @@
         flex-wrap: nowrap;
     }
 
-    .devices-empty {
+    .users-empty {
         padding: 16px 18px;
         font-size: 14px;
         color: #6b7280;
     }
 
-    .devices-pagination {
+    .users-pagination {
         padding: 10px 18px 6px;
         font-size: 13px;
     }
@@ -737,7 +810,7 @@
         white-space: nowrap;
     }
 
-    .badge-vehicle {
+    .badge-role {
         background: #eef2ff;
         border-color: #e0e7ff;
         color: #4338ca;
@@ -823,7 +896,7 @@
             justify-content: flex-start;
         }
 
-        .devices-search-form {
+        .users-search-form {
             flex: 1;
         }
 
@@ -831,8 +904,8 @@
             grid-template-columns: minmax(0, 1fr);
         }
 
-        .devices-table-head,
-        .devices-table-row {
+        .users-table-head,
+        .users-table-row {
             grid-template-columns: minmax(0, 1fr);
             row-gap: 6px;
         }
@@ -899,7 +972,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const controller = new AbortController();
         currentRequest = controller;
 
-        fetch(`{{ route('management.autocomplete.devices') }}?q=${encodeURIComponent(query)}`, {
+        fetch(`{{ route('management.autocomplete.users') }}?q=${encodeURIComponent(query)}`, {
             signal: controller.signal
         })
         .then(response => response.json())
@@ -918,7 +991,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderResults(items) {
         if (!items || items.length === 0) {
-            results.innerHTML = '<div class="autocomplete-empty"><i class="fas fa-search" style="margin-right:8px;opacity:0.5;"></i>No devices found</div>';
+            results.innerHTML = '<div class="autocomplete-empty"><i class="fas fa-search" style="margin-right:8px;opacity:0.5;"></i>No users found</div>';
             return;
         }
 

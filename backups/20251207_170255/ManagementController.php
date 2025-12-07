@@ -68,8 +68,11 @@ class ManagementController extends Controller
 
         // === DEVICES ===
         $devicesQuery = Device::where(function($q) use ($query) {
-            $q->where('device_name', 'like', "%{$query}%")
+            $q->where('imei', 'like', "%{$query}%")
               ->orWhere('serial_number', 'like', "%{$query}%")
+              ->orWhere('name', 'like', "%{$query}%")
+              ->orWhere('model', 'like', "%{$query}%")
+              ->orWhere('manufacturer', 'like', "%{$query}%")
               ->orWhere('id', $query);
         });
 

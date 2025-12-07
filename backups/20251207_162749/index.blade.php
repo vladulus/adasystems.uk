@@ -5,50 +5,37 @@
 @section('content')
 <div class="page-wrapper">
     {{-- Header --}}
-    <div class="header-card">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Management Dashboard</h1>
-                <p class="page-subtitle">Manage devices, vehicles, users and drivers.</p>
-            </div>
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Management Dashboard</h1>
+            <p class="page-subtitle">Manage devices, vehicles, users and drivers.</p>
+        </div>
 
-            <div class="page-header-actions">
-                <a href="{{ route('hub') }}" class="btn btn-secondary btn-icon">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Back to Hub</span>
-                </a>
-            </div>
+        <div class="page-header-actions">
+            <a href="{{ route('hub') }}" class="btn btn-secondary btn-icon">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Hub</span>
+            </a>
         </div>
     </div>
 
     {{-- Global search --}}
     <div class="card card-search">
         <div class="card-body">
-            <form method="GET" action="{{ route('management.index') }}" class="search-form" id="searchForm">
+            <form method="GET" action="{{ route('management.index') }}" class="search-form">
                 <div class="search-row">
-                    <div class="search-input-container">
-                        <div class="search-input-wrapper">
-                            <span class="search-icon">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input
-                                type="text"
-                                name="search"
-                                id="searchInput"
-                                class="search-input"
-                                placeholder="Search by name, ID, plate number, IMEI, email, license number..."
-                                value="{{ $searchQuery }}"
-                                autocomplete="off"
-                            >
-                            <span class="search-spinner" id="searchSpinner" style="display:none;">
-                                <i class="fas fa-spinner fa-spin"></i>
-                            </span>
-                        </div>
-                        
-                        {{-- Autocomplete dropdown --}}
-                        <div class="autocomplete-dropdown" id="autocompleteDropdown" style="display:none;">
-                            <div class="autocomplete-results" id="autocompleteResults"></div>
-                        </div>
+                    <div class="search-input-wrapper">
+                        <span class="search-icon">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input
+                            type="text"
+                            name="search"
+                            class="search-input"
+                            placeholder="Search by name, ID, plate number, IMEI, email, license number..."
+                            value="{{ $searchQuery }}"
+                            autofocus
+                        >
                     </div>
 
                     <div class="search-actions">
@@ -361,19 +348,12 @@
         padding: 24px 16px 40px;
     }
 
-    .header-card {
-        padding: 16px 20px;
-        margin-bottom: 18px;
-        background: #ffffff;
-        border-radius: 18px;
-        box-shadow: 0 18px 45px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(148, 163, 184, 0.18);
-    }
-
     .page-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         gap: 16px;
+        margin-bottom: 18px;
     }
 
     .page-header-actions {
@@ -411,7 +391,6 @@
 
     .card-search {
         margin-bottom: 22px;
-        overflow: visible;
     }
 
     .card-empty {
@@ -868,274 +847,5 @@
             grid-template-columns: minmax(0, 1fr);
         }
     }
-
-    /* Autocomplete styles */
-    .search-input-container {
-        flex: 1;
-        position: relative;
-    }
-
-    .search-spinner {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9ca3af;
-    }
-
-    .autocomplete-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        margin-top: 8px;
-        background: #fff;
-        border-radius: 16px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-        border: 1px solid #e5e7eb;
-        z-index: 1000;
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    .autocomplete-results {
-        padding: 8px;
-    }
-
-    .autocomplete-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 12px;
-        border-radius: 10px;
-        text-decoration: none;
-        color: #111827;
-        transition: background 0.15s;
-    }
-
-    .autocomplete-item:hover {
-        background: #f3f4f6;
-    }
-
-    .autocomplete-item-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-size: 14px;
-        flex-shrink: 0;
-    }
-
-    .autocomplete-item-content {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .autocomplete-item-title {
-        font-weight: 600;
-        font-size: 14px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .autocomplete-item-subtitle {
-        font-size: 12px;
-        color: #6b7280;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .autocomplete-item-badge {
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 500;
-        flex-shrink: 0;
-    }
-
-    .autocomplete-item-badge.active {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .autocomplete-item-badge.inactive {
-        background: #f3f4f6;
-        color: #6b7280;
-    }
-
-    .autocomplete-empty {
-        padding: 20px;
-        text-align: center;
-        color: #6b7280;
-        font-size: 14px;
-    }
-
-    .autocomplete-category {
-        padding: 8px 12px 4px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #9ca3af;
-    }
 </style>
-@endsection
-
-@section('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
-    const dropdown = document.getElementById('autocompleteDropdown');
-    const results = document.getElementById('autocompleteResults');
-    const spinner = document.getElementById('searchSpinner');
-    const searchForm = document.getElementById('searchForm');
-    
-    let debounceTimer;
-    let currentRequest = null;
-
-    searchInput.addEventListener('input', function() {
-        const query = this.value.trim();
-        
-        clearTimeout(debounceTimer);
-        
-        if (query.length < 2) {
-            dropdown.style.display = 'none';
-            return;
-        }
-
-        debounceTimer = setTimeout(() => {
-            fetchResults(query);
-        }, 300);
-    });
-
-    searchInput.addEventListener('focus', function() {
-        if (this.value.trim().length >= 2 && results.innerHTML) {
-            dropdown.style.display = 'block';
-        }
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!searchForm.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
-    });
-
-    function fetchResults(query) {
-        if (currentRequest) {
-            currentRequest.abort();
-        }
-
-        spinner.style.display = 'block';
-
-        const controller = new AbortController();
-        currentRequest = controller;
-
-        fetch(`{{ route('management.autocomplete.global') }}?q=${encodeURIComponent(query)}`, {
-            signal: controller.signal
-        })
-        .then(response => response.json())
-        .then(data => {
-            spinner.style.display = 'none';
-            renderResults(data.results);
-            dropdown.style.display = 'block';
-        })
-        .catch(err => {
-            if (err.name !== 'AbortError') {
-                spinner.style.display = 'none';
-                console.error('Search error:', err);
-            }
-        });
-    }
-
-    function renderResults(items) {
-        if (!items || items.length === 0) {
-            results.innerHTML = '<div class="autocomplete-empty"><i class="fas fa-search" style="margin-right:8px;opacity:0.5;"></i>No results found</div>';
-            return;
-        }
-
-        // Group by type
-        const grouped = {};
-        items.forEach(item => {
-            if (!grouped[item.type]) {
-                grouped[item.type] = [];
-            }
-            grouped[item.type].push(item);
-        });
-
-        const typeLabels = {
-            device: 'Devices',
-            vehicle: 'Vehicles',
-            user: 'Users',
-            driver: 'Drivers'
-        };
-
-        let html = '';
-        
-        for (const [type, typeItems] of Object.entries(grouped)) {
-            html += `<div class="autocomplete-category">${typeLabels[type] || type}</div>`;
-            
-            typeItems.forEach(item => {
-                const statusClass = item.status === 'active' ? 'active' : 'inactive';
-                html += `
-                    <a href="${item.url}" class="autocomplete-item">
-                        <div class="autocomplete-item-icon" style="background:${item.color}">
-                            <i class="fas ${item.icon}"></i>
-                        </div>
-                        <div class="autocomplete-item-content">
-                            <div class="autocomplete-item-title">${escapeHtml(item.title)}</div>
-                            <div class="autocomplete-item-subtitle">${escapeHtml(item.subtitle || '')}</div>
-                        </div>
-                        <span class="autocomplete-item-badge ${statusClass}">${item.status || 'N/A'}</span>
-                    </a>
-                `;
-            });
-        }
-
-        results.innerHTML = html;
-    }
-
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // Keyboard navigation
-    searchInput.addEventListener('keydown', function(e) {
-        const items = dropdown.querySelectorAll('.autocomplete-item');
-        const active = dropdown.querySelector('.autocomplete-item:focus');
-        
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (!active && items.length > 0) {
-                items[0].focus();
-            } else if (active) {
-                const index = Array.from(items).indexOf(active);
-                if (index < items.length - 1) {
-                    items[index + 1].focus();
-                }
-            }
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (active) {
-                const index = Array.from(items).indexOf(active);
-                if (index > 0) {
-                    items[index - 1].focus();
-                } else {
-                    searchInput.focus();
-                }
-            }
-        } else if (e.key === 'Escape') {
-            dropdown.style.display = 'none';
-            searchInput.blur();
-        }
-    });
-});
-</script>
 @endsection

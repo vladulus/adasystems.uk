@@ -5,55 +5,42 @@
 @section('content')
 <div class="page-wrapper">
     <!-- Header -->
-    <div class="header-card">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Devices</h1>
-                <p class="page-subtitle">Manage tracking devices, Serials numbers and assignments.</p>
-            </div>
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Devices</h1>
+            <p class="page-subtitle">Manage tracking devices, Serials numbers and assignments.</p>
+        </div>
 
-            <div class="page-header-actions">
-                {{-- Dashboard button --}}
-                <a href="{{ route('management.index') }}" class="btn btn-secondary btn-icon">
-                    <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
-                </a>
+        <div class="page-header-actions">
+            {{-- Dashboard button --}}
+            <a href="{{ route('management.index') }}" class="btn btn-secondary btn-icon">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
 
-                {{-- Add device --}}
-                <a href="{{ route('management.devices.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Device</span>
-                </a>
-            </div>
+            {{-- Add device --}}
+            <a href="{{ route('management.devices.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                <span>Add Device</span>
+            </a>
         </div>
     </div>
 
     {{-- Search card --}}
     <div class="card card-search">
-        <form action="{{ route('management.devices.index') }}" method="GET" class="search-form" id="searchForm">
+        <form action="{{ route('management.devices.index') }}" method="GET" class="search-form">
             <div class="search-row">
-                <div class="search-input-container">
-                    <div class="search-input-wrapper">
-                        <span class="search-icon">
-                            <i class="fas fa-search"></i>
-                        </span>
-                        <input
-                            type="text"
-                            name="search"
-                            id="searchInput"
-                            class="search-input"
-                            placeholder="Search by name, serial number, IMEI, vehicle..."
-                            value="{{ request('search') }}"
-                            autocomplete="off"
-                        >
-                        <span class="search-spinner" id="searchSpinner" style="display:none;">
-                            <i class="fas fa-spinner fa-spin"></i>
-                        </span>
-                    </div>
-                    {{-- Autocomplete dropdown --}}
-                    <div class="autocomplete-dropdown" id="autocompleteDropdown" style="display:none;">
-                        <div class="autocomplete-results" id="autocompleteResults"></div>
-                    </div>
+                <div class="search-input-wrapper">
+                    <span class="search-icon">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input
+                        type="text"
+                        name="search"
+                        class="search-input"
+                        placeholder="Search by name, serial number, IMEI, vehicle..."
+                        value="{{ request('search') }}"
+                    >
                 </div>
                 <div class="search-actions">
                     <button type="submit" class="btn btn-primary">
@@ -259,19 +246,12 @@
         padding: 24px 16px 40px;
     }
 
-    .header-card {
-        padding: 16px 20px;
-        margin-bottom: 18px;
-        background: #ffffff;
-        border-radius: 18px;
-        box-shadow: 0 18px 45px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(148, 163, 184, 0.18);
-    }
-
     .page-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         gap: 16px;
+        margin-bottom: 18px;
     }
 
     .page-title {
@@ -421,7 +401,6 @@
 
     .card-search {
         padding: 16px 20px;
-        overflow: visible;
     }
 
     .search-form {
@@ -466,109 +445,6 @@
         display: flex;
         gap: 8px;
         flex-shrink: 0;
-    }
-
-    .search-input-container {
-        flex: 1;
-        position: relative;
-    }
-
-    .search-spinner {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9ca3af;
-    }
-
-    .autocomplete-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-        margin-top: 4px;
-        z-index: 1000;
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    .autocomplete-results {
-        padding: 8px 0;
-    }
-
-    .autocomplete-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 16px;
-        text-decoration: none;
-        color: inherit;
-        transition: background 0.15s;
-    }
-
-    .autocomplete-item:hover {
-        background: #f3f4f6;
-    }
-
-    .autocomplete-item-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-size: 14px;
-        flex-shrink: 0;
-    }
-
-    .autocomplete-item-content {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .autocomplete-item-title {
-        font-weight: 500;
-        color: #111827;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .autocomplete-item-subtitle {
-        font-size: 12px;
-        color: #6b7280;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .autocomplete-item-badge {
-        font-size: 11px;
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-weight: 500;
-    }
-
-    .autocomplete-item-badge.active {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .autocomplete-item-badge.inactive {
-        background: #f3f4f6;
-        color: #6b7280;
-    }
-
-    .autocomplete-empty {
-        padding: 16px;
-        text-align: center;
-        color: #6b7280;
-        font-size: 14px;
     }
 
     .filters-grid {
@@ -846,108 +722,4 @@
         }
     }
 </style>
-@endsection
-
-@section('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchInput');
-    const dropdown = document.getElementById('autocompleteDropdown');
-    const results = document.getElementById('autocompleteResults');
-    const spinner = document.getElementById('searchSpinner');
-    const searchForm = document.getElementById('searchForm');
-    
-    if (!searchInput) return;
-    
-    let debounceTimer;
-    let currentRequest = null;
-
-    searchInput.addEventListener('input', function() {
-        const query = this.value.trim();
-        
-        clearTimeout(debounceTimer);
-        
-        if (query.length < 2) {
-            dropdown.style.display = 'none';
-            return;
-        }
-
-        debounceTimer = setTimeout(() => {
-            fetchResults(query);
-        }, 300);
-    });
-
-    searchInput.addEventListener('focus', function() {
-        if (this.value.trim().length >= 2 && results.innerHTML) {
-            dropdown.style.display = 'block';
-        }
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!searchForm.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
-    });
-
-    function fetchResults(query) {
-        if (currentRequest) {
-            currentRequest.abort();
-        }
-
-        spinner.style.display = 'block';
-
-        const controller = new AbortController();
-        currentRequest = controller;
-
-        fetch(`{{ route('management.autocomplete.devices') }}?q=${encodeURIComponent(query)}`, {
-            signal: controller.signal
-        })
-        .then(response => response.json())
-        .then(data => {
-            spinner.style.display = 'none';
-            renderResults(data.results);
-            dropdown.style.display = 'block';
-        })
-        .catch(err => {
-            if (err.name !== 'AbortError') {
-                spinner.style.display = 'none';
-                console.error('Search error:', err);
-            }
-        });
-    }
-
-    function renderResults(items) {
-        if (!items || items.length === 0) {
-            results.innerHTML = '<div class="autocomplete-empty"><i class="fas fa-search" style="margin-right:8px;opacity:0.5;"></i>No devices found</div>';
-            return;
-        }
-
-        let html = '';
-        items.forEach(item => {
-            const statusClass = item.status === 'active' ? 'active' : 'inactive';
-            html += `
-                <a href="${item.url}" class="autocomplete-item">
-                    <div class="autocomplete-item-icon" style="background:${item.color}">
-                        <i class="fas ${item.icon}"></i>
-                    </div>
-                    <div class="autocomplete-item-content">
-                        <div class="autocomplete-item-title">${escapeHtml(item.title)}</div>
-                        <div class="autocomplete-item-subtitle">${escapeHtml(item.subtitle || '')}</div>
-                    </div>
-                    <span class="autocomplete-item-badge ${statusClass}">${item.status || 'unknown'}</span>
-                </a>
-            `;
-        });
-        
-        results.innerHTML = html;
-    }
-
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-});
-</script>
 @endsection

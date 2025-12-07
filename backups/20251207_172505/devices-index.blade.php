@@ -5,7 +5,7 @@
 @section('content')
 <div class="page-wrapper">
     <!-- Header -->
-    <div class="header-card">
+    <div class="card card-header">
         <div class="page-header">
             <div>
                 <h1 class="page-title">Devices</h1>
@@ -259,12 +259,9 @@
         padding: 24px 16px 40px;
     }
 
-    .header-card {
+    .card-header {
         padding: 16px 20px;
         margin-bottom: 18px;
-        background: #ffffff;
-        border-radius: 18px;
-        box-shadow: 0 18px 45px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(148, 163, 184, 0.18);
     }
 
     .page-header {

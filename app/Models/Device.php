@@ -17,6 +17,7 @@ class Device extends Model
         'status',
         'last_online',
         'ip_address',
+        'upload_interval',
         // dacă în viitor vrei să salvezi created_by / updated_by prin fill():
         // 'created_by',
         // 'updated_by',
@@ -85,5 +86,21 @@ class Device extends Model
         }
 
         return $this->last_online->diffInMinutes(now()) <= 5;
+    }
+
+    /**
+     * Get all telemetry records for this device
+     */
+    public function telemetry()
+    {
+        return $this->hasMany(DeviceTelemetry::class);
+    }
+
+    /**
+     * Get the latest telemetry record
+     */
+    public function latestTelemetry()
+    {
+        return $this->hasOne(DeviceTelemetry::class)->latestOfMany('recorded_at');
     }
 }

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Drivers')
+@section('title', 'Vehicles')
 
 @section('styles')
 <style>
@@ -9,7 +9,7 @@
     margin:0 auto;
     padding:24px 16px 40px;
 }
-.header-card {
+.card-header {
     background:#fff;
     border-radius:18px;
     padding:16px 20px;
@@ -301,18 +301,18 @@
 }
 
 /* Table */
-.drivers-table {
+.vehicles-table {
     border-radius:14px;
     border:1px solid #eef2ff;
     overflow:hidden;
 }
-.drivers-table-head,
-.drivers-table-row {
+.vehicles-table-head,
+.vehicles-table-row {
     display:grid;
     grid-template-columns:2.6fr 2fr 1.1fr 1.3fr 1.4fr;
     align-items:center;
 }
-.drivers-table-head {
+.vehicles-table-head {
     background:#f9fafb;
     border-bottom:1px solid #e5e7eb;
     padding:0.55rem 0.9rem;
@@ -322,14 +322,14 @@
     color:#9ca3af;
     font-weight:600;
 }
-.drivers-table-row {
+.vehicles-table-row {
     padding:0.65rem 0.9rem;
     border-top:1px solid #f3f4f6;
 }
-.drivers-table-row:nth-child(even) {
+.vehicles-table-row:nth-child(even) {
     background:#fcfcff;
 }
-.col-driver {
+.col-vehicle {
     display:flex;
     align-items:center;
     gap:0.7rem;
@@ -338,27 +338,28 @@
     width:32px;
     height:32px;
     border-radius:10px;
-    background:radial-gradient(circle at 0 0,#22c55e,#16a34a);
+    background:radial-gradient(circle at 0 0,#a855f7,#6366f1);
     display:flex;
     align-items:center;
     justify-content:center;
     color:#fff;
     font-size:0.9rem;
 }
-.driver-name {
+.vehicle-name {
     font-size:0.9rem;
     font-weight:600;
     color:#111827;
 }
-.driver-meta {
+.vehicle-meta {
     font-size:0.78rem;
     color:#6b7280;
 }
-.col-license {
+.col-device {
     font-size:0.8rem;
     color:#4b5563;
 }
-.license-meta {
+.device-name { font-weight:500; }
+.device-meta {
     font-size:0.75rem;
     color:#9ca3af;
 }
@@ -396,10 +397,6 @@
     background:#fef3c7;
     color:#92400e;
 }
-.badge-danger-soft {
-    background:#fee2e2;
-    color:#b91c1c;
-}
 .badge-muted {
     background:#eef2ff;
     color:#4b5563;
@@ -407,7 +404,7 @@
 
 .inline-form { display:inline; }
 
-.drivers-empty {
+.vehicles-empty {
     padding:1rem;
     text-align:center;
     font-size:0.9rem;
@@ -456,12 +453,12 @@
 @section('content')
 <div class="page-wrapper">
     <!-- Header -->
-    <div class="header-card">
+    <div class="card card-header">
         <div class="page-header">
             <div>
-                <h1 class="page-title">Drivers</h1>
+                <h1 class="page-title">Vehicles</h1>
                 <p class="page-subtitle">
-                    Manage drivers, licenses and vehicle assignments.
+                    Manage fleet vehicles, serialised devices and assignments.
                 </p>
             </div>
 
@@ -471,10 +468,10 @@
                     <span>Dashboard</span>
                 </a>
 
-                @can('create', App\Models\Driver::class)
-                    <a href="{{ route('management.drivers.create') }}" class="btn btn-primary">
+                @can('create', App\Models\Vehicle::class)
+                    <a href="{{ route('management.vehicles.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i>
-                        <span>Add driver</span>
+                        <span>Add vehicle</span>
                     </a>
                 @endcan
             </div>
@@ -483,7 +480,7 @@
 
     {{-- Search card --}}
 <div class="card card-search">
-    <form action="{{ route('management.drivers.index') }}" method="GET" class="search-form" id="searchForm">
+    <form action="{{ route('management.vehicles.index') }}" method="GET" class="search-form" id="searchForm">
         <div class="search-row">
             <div class="search-input-container">
                 <div class="search-input-wrapper">
@@ -495,7 +492,7 @@
                         name="search"
                         id="searchInput"
                         class="search-input"
-                        placeholder="Search by name, email, phone, license..."
+                        placeholder="Search by plate, model, VIN, device..."
                         value="{{ request('search') }}"
                         autocomplete="off"
                     >
@@ -514,7 +511,7 @@
                     <span>Search</span>
                 </button>
                 @if(request('search'))
-                    <a href="{{ route('management.drivers.index') }}" class="btn btn-ghost">
+                    <a href="{{ route('management.vehicles.index') }}" class="btn btn-ghost">
                         <i class="fas fa-times"></i>
                         <span>Clear</span>
                     </a>
@@ -526,15 +523,14 @@
 
 {{-- Filters --}}
 <div class="filters-card">
-    <form action="{{ route('management.drivers.index') }}" method="GET" class="filters-row">
+    <form action="{{ route('management.vehicles.index') }}" method="GET" class="filters-row">
         <div class="filter-field">
             <label class="filter-label">Status</label>
             <select name="status" class="select">
                 <option value="">All statuses</option>
-                <option value="active"     {{ request('status') === 'active'     ? 'selected' : '' }}>Active</option>
-                <option value="inactive"   {{ request('status') === 'inactive'   ? 'selected' : '' }}>Inactive</option>
-                <option value="on_leave"   {{ request('status') === 'on_leave'   ? 'selected' : '' }}>On leave</option>
-                <option value="terminated" {{ request('status') === 'terminated' ? 'selected' : '' }}>Terminated</option>
+                <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Active</option>
+                <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                <option value="service"  {{ request('status') === 'service'  ? 'selected' : '' }}>In service</option>
             </select>
         </div>
 
@@ -542,137 +538,105 @@
             <label class="filter-label">Assignment</label>
             <select name="assignment" class="select">
                 <option value="">All</option>
-                <option value="assigned"   {{ request('assignment') === 'assigned'   ? 'selected' : '' }}>With vehicle</option>
-                <option value="unassigned" {{ request('assignment') === 'unassigned' ? 'selected' : '' }}>No vehicle</option>
-            </select>
-        </div>
-
-        <div class="filter-field">
-            <label class="filter-label">License</label>
-            <select name="license_status" class="select">
-                <option value="">All</option>
-                <option value="valid"          {{ request('license_status') === 'valid'          ? 'selected' : '' }}>Valid</option>
-                <option value="expiring_soon"  {{ request('license_status') === 'expiring_soon'  ? 'selected' : '' }}>Expiring soon</option>
-                <option value="expired"        {{ request('license_status') === 'expired'        ? 'selected' : '' }}>Expired</option>
+                <option value="with_device"   {{ request('assignment') === 'with_device'   ? 'selected' : '' }}>With device</option>
+                <option value="without_device" {{ request('assignment') === 'without_device' ? 'selected' : '' }}>No device</option>
             </select>
         </div>
 
         <div class="filter-actions">
             <button type="submit" class="btn btn-light">Apply filters</button>
-            <a href="{{ route('management.drivers.index') }}" class="btn btn-ghost">Reset</a>
+            <a href="{{ route('management.vehicles.index') }}" class="btn btn-ghost">Reset</a>
         </div>
     </form>
 </div>
 
 <div class="content-grid">
-    {{-- Drivers list --}}
+    {{-- Vehicles list --}}
     <div class="card">
         <div class="card-header">
-            <h2 class="card-title">Drivers list</h2>
+            <h2 class="card-title">Vehicles list</h2>
             <span class="card-meta">
-                Showing {{ $drivers->firstItem() ?? 0 }}–{{ $drivers->lastItem() ?? 0 }}
-                of {{ $drivers->total() }} drivers
+                Showing {{ $vehicles->firstItem() ?? 0 }}–{{ $vehicles->lastItem() ?? 0 }}
+                of {{ $vehicles->total() }} vehicles
             </span>
         </div>
 
-        <div class="drivers-table">
-            <div class="drivers-table-head">
-                <div class="col-driver">Driver</div>
-                <div class="col-license">License</div>
+        <div class="vehicles-table">
+            <div class="vehicles-table-head">
+                <div class="col-vehicle">Vehicle</div>
+                <div class="col-device">Device</div>
                 <div class="col-status">Status</div>
                 <div class="col-created">Created</div>
                 <div class="col-actions">Actions</div>
             </div>
 
-            @forelse($drivers as $driver)
-                <div class="drivers-table-row">
-                    {{-- Driver --}}
-                    <div class="col-driver">
+            @forelse($vehicles as $vehicle)
+                <div class="vehicles-table-row">
+                    {{-- Vehicle --}}
+                    <div class="col-vehicle">
                         <div class="avatar-square">
-                            <i class="fas fa-id-card"></i>
+                            <i class="fas fa-car-side"></i>
                         </div>
                         <div>
-                            <div class="driver-name">
-                                {{ $driver->name ?? 'Driver' }}
+                            <div class="vehicle-name">
+                                {{ $vehicle->registration_number ?? 'Unregistered' }}
                             </div>
-                            <div class="driver-meta">
-                                @if($driver->email)
-                                    {{ $driver->email }}
-                                @elseif($driver->phone)
-                                    {{ $driver->phone }}
-                                @elseif($driver->user)
-                                    {{ $driver->user->email }}
-                                @else
-                                    No contact details
+                            <div class="vehicle-meta">
+                                {{ trim(($vehicle->make ?? '').' '.($vehicle->model ?? '')) ?: 'No make / model' }}
+                                @if($vehicle->year)
+                                    · {{ $vehicle->year }}
                                 @endif
-                                @if($driver->phone)
-                                    · {{ $driver->phone }}
+                                @if($vehicle->vin)
+                                    · VIN: {{ $vehicle->vin }}
                                 @endif
                             </div>
                         </div>
                     </div>
 
-                    {{-- License --}}
-                    <div class="col-license">
-                        <div>
-                            {{ $driver->license_number ?? 'No license' }}
-                            @if($driver->license_type)
-                                · {{ $driver->license_type }}
+                    {{-- Device --}}
+                    <div class="col-device">
+                        @if($vehicle->device)
+                            <div class="device-name">{{ $vehicle->device->device_name ?? 'Device' }}</div>
+                            @if($vehicle->device->serial_number)
+                                <div class="device-meta">Serial: {{ $vehicle->device->serial_number }}</div>
                             @endif
-                        </div>
-                        @php
-                            $expiry = $driver->license_expiry_date;
-                        @endphp
-                        @if($expiry)
-                            <div class="license-meta">
-                                @if($expiry < now())
-                                    <span class="badge badge-danger-soft">
-                                        <i class="fas fa-exclamation-triangle"></i> Expired {{ $expiry->format('M d, Y') }}
-                                    </span>
-                                @elseif($expiry->between(now(), now()->addDays(30)))
-                                    <span class="badge badge-warning">
-                                        Expires {{ $expiry->diffForHumans(null, true) }}
-                                    </span>
-                                @else
-                                    Expires {{ $expiry->format('M d, Y') }}
-                                @endif
-                            </div>
+                        @else
+                            <span class="badge badge-muted">No device</span>
                         @endif
                     </div>
 
                     {{-- Status --}}
                     <div class="col-status">
                         @php
-                            $status = $driver->status ?? 'inactive';
+                            $status = $vehicle->status ?? 'inactive';
                             $statusClass = match($status) {
-                                'active'   => 'badge-success',
-                                'on_leave' => 'badge-warning',
-                                'terminated' => 'badge-danger-soft',
-                                default    => 'badge-secondary',
+                                'active'  => 'badge-success',
+                                'service' => 'badge-warning',
+                                default   => 'badge-secondary',
                             };
                         @endphp
-                        <span class="badge {{ $statusClass }}">{{ ucfirst(str_replace('_',' ',$status)) }}</span>
+                        <span class="badge {{ $statusClass }}">{{ ucfirst($status) }}</span>
                     </div>
 
                     {{-- Created --}}
                     <div class="col-created">
-                        {{ $driver->created_at?->format('M d, Y') ?? '—' }}
+                        {{ $vehicle->created_at?->format('M d, Y') ?? '—' }}
                     </div>
 
                     {{-- Actions --}}
                     <div class="col-actions">
-                        @can('update', $driver)
-                            <a href="{{ route('management.drivers.edit', $driver) }}" class="btn-icon-small">
+                        @can('update', $vehicle)
+                            <a href="{{ route('management.vehicles.edit', $vehicle) }}" class="btn-icon-small">
                                 <i class="fas fa-edit"></i>
                                 <span>Edit</span>
                             </a>
                         @endcan
 
-                        @can('delete', $driver)
-                            <form action="{{ route('management.drivers.destroy', $driver) }}"
+                        @can('delete', $vehicle)
+                            <form action="{{ route('management.vehicles.destroy', $vehicle) }}"
                                   method="POST"
                                   class="inline-form"
-                                  onsubmit="return confirm('Delete this driver? This action cannot be undone.');">
+                                  onsubmit="return confirm('Delete this vehicle? This action cannot be undone.');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn-icon-small btn-danger">
@@ -684,15 +648,15 @@
                     </div>
                 </div>
             @empty
-                <div class="drivers-empty">
-                    <p>No drivers found. Try adjusting your filters.</p>
+                <div class="vehicles-empty">
+                    <p>No vehicles found.</p>
                 </div>
             @endforelse
         </div>
 
-        @if($drivers->hasPages())
+        @if($vehicles->hasPages())
             <div class="pagination-wrapper">
-                {{ $drivers->links() }}
+                {{ $vehicles->links() }}
             </div>
         @endif
     </div>
@@ -717,37 +681,16 @@
                 <div class="stat-value text-muted">{{ $stats['inactive'] ?? 0 }}</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">On leave</div>
-                <div class="stat-value text-warning">{{ $stats['on_leave'] ?? 0 }}</div>
+                <div class="stat-label">In service</div>
+                <div class="stat-value text-warning">{{ $stats['service'] ?? 0 }}</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">Terminated</div>
-                <div class="stat-value text-muted">{{ $stats['terminated'] ?? 0 }}</div>
+                <div class="stat-label">With device</div>
+                <div class="stat-value">{{ $stats['with_device'] ?? 0 }}</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">With vehicle</div>
-                <div class="stat-value">{{ $stats['with_vehicles'] ?? 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">No vehicle</div>
-                <div class="stat-value">{{ $stats['without_vehicles'] ?? 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">License expired</div>
-                <div class="stat-value text-warning">{{ $stats['license_expired'] ?? 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">License expiring soon</div>
-                <div class="stat-value text-warning">{{ $stats['license_expiring_soon'] ?? 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Average age</div>
-                @php $avgAge = $stats['avg_age'] ?? null; @endphp
-                <div class="stat-value">{{ $avgAge ? round($avgAge) . ' yrs' : '—' }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Hired this year</div>
-                <div class="stat-value">{{ $stats['hired_this_year'] ?? 0 }}</div>
+                <div class="stat-label">No device</div>
+                <div class="stat-value">{{ $stats['no_device'] ?? 0 }}</div>
             </div>
         </div>
     </div>
@@ -806,7 +749,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const controller = new AbortController();
         currentRequest = controller;
 
-        fetch(`{{ route('management.autocomplete.drivers') }}?q=${encodeURIComponent(query)}`, {
+        fetch(`{{ route('management.autocomplete.vehicles') }}?q=${encodeURIComponent(query)}`, {
             signal: controller.signal
         })
         .then(response => response.json())
@@ -825,7 +768,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderResults(items) {
         if (!items || items.length === 0) {
-            results.innerHTML = '<div class="autocomplete-empty"><i class="fas fa-search" style="margin-right:8px;opacity:0.5;"></i>No drivers found</div>';
+            results.innerHTML = '<div class="autocomplete-empty"><i class="fas fa-search" style="margin-right:8px;opacity:0.5;"></i>No vehicles found</div>';
             return;
         }
 

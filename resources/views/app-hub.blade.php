@@ -4,13 +4,19 @@
 
 @section('content')
 <div class="page-wrapper" style="max-width:1100px;margin:0 auto;padding:24px 16px 40px;">
-    <div style="margin-bottom:20px;">
-        <h1 style="font-size:26px;font-weight:600;margin:0 0 4px;">
-            Welcome, {{ auth()->user()->name }}!
-        </h1>
-        <p style="color:#6b7280;margin:0;">
-            Choose where you want to go.
-        </p>
+    <div class="page-header-left" style="margin-bottom:20px;">
+        <a href="{{ url('/') }}" class="back-link" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#6b7280;text-decoration:none;padding:6px 0;transition:color 0.15s ease;margin-bottom:8px;">
+            <i class="fas fa-arrow-left" style="font-size:11px;"></i>
+            <span>Back to Homepage</span>
+        </a>
+        <div>
+            <h1 style="font-size:26px;font-weight:600;margin:0 0 4px;">
+                Welcome, {{ auth()->user()->name }}!
+            </h1>
+            <p style="color:#6b7280;margin:0;">
+                Choose where you want to go.
+            </p>
+        </div>
     </div>
 
     <div style="

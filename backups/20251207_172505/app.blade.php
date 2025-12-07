@@ -30,19 +30,14 @@
             background: #ffffff;
             backdrop-filter: blur(8px);
             padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
             border-bottom: 1px solid rgba(148, 163, 184, 0.4);
             position: sticky;
             top: 0;
             z-index: 20;
-        }
-
-        .header-inner {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .header-left {
@@ -150,13 +145,10 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .header-inner {
+            .header {
                 flex-direction: column;
                 gap: 0.75rem;
                 text-align: center;
-            }
-
-            .header {
                 padding: 0.75rem 1rem;
             }
 
@@ -176,32 +168,30 @@
 <body>
     <!-- Header -->
     <header class="header">
-        <div class="header-inner">
-            <div class="header-left">
-                <a href="{{ route('home') }}">
-                    <img src="{{ asset('logo.png') }}" alt="Ada Pi Systems" class="logo">
-                </a>
-                @php
-                   $primaryRole = auth()->user()
-                       ? auth()->user()->getRoleNames()->first()
-                       : null;
-                @endphp
+        <div class="header-left">
+            <a href="{{ route('home') }}">
+                <img src="{{ asset('logo.png') }}" alt="Ada Pi Systems" class="logo">
+            </a>
+            @php
+               $primaryRole = auth()->user()
+                   ? auth()->user()->getRoleNames()->first()
+                   : null;
+            @endphp
 
-                <div class="welcome">
-                    <h1>Welcome, {{ auth()->user()->name ?? 'User' }}!</h1>
-                    <span class="role">{{ $primaryRole ? ucfirst($primaryRole) : 'User' }}</span>
-                </div>
+            <div class="welcome">
+                <h1>Welcome, {{ auth()->user()->name ?? 'User' }}!</h1>
+                <span class="role">{{ $primaryRole ? ucfirst($primaryRole) : 'User' }}</span>
             </div>
+        </div>
 
-            <div class="header-right">
-                <span class="user-email">{{ auth()->user()->email ?? '' }}</span>
-                <form action="{{ route('logout') }}" method="POST" style="display: inline;">
-                    @csrf
-                    <button type="submit" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
-                </form>
-            </div>
+        <div class="header-right">
+            <span class="user-email">{{ auth()->user()->email ?? '' }}</span>
+            <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+                @csrf
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </form>
         </div>
     </header>
 

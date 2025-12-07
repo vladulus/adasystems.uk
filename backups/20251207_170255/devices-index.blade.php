@@ -5,26 +5,24 @@
 @section('content')
 <div class="page-wrapper">
     <!-- Header -->
-    <div class="header-card">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Devices</h1>
-                <p class="page-subtitle">Manage tracking devices, Serials numbers and assignments.</p>
-            </div>
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Devices</h1>
+            <p class="page-subtitle">Manage tracking devices, Serials numbers and assignments.</p>
+        </div>
 
-            <div class="page-header-actions">
-                {{-- Dashboard button --}}
-                <a href="{{ route('management.index') }}" class="btn btn-secondary btn-icon">
-                    <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
-                </a>
+        <div class="page-header-actions">
+            {{-- Dashboard button --}}
+            <a href="{{ route('management.index') }}" class="btn btn-secondary btn-icon">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
 
-                {{-- Add device --}}
-                <a href="{{ route('management.devices.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i>
-                    <span>Add Device</span>
-                </a>
-            </div>
+            {{-- Add device --}}
+            <a href="{{ route('management.devices.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                <span>Add Device</span>
+            </a>
         </div>
     </div>
 
@@ -259,19 +257,12 @@
         padding: 24px 16px 40px;
     }
 
-    .header-card {
-        padding: 16px 20px;
-        margin-bottom: 18px;
-        background: #ffffff;
-        border-radius: 18px;
-        box-shadow: 0 18px 45px rgba(124, 58, 237, 0.2), 0 0 0 1px rgba(148, 163, 184, 0.18);
-    }
-
     .page-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start;
         gap: 16px;
+        margin-bottom: 18px;
     }
 
     .page-title {

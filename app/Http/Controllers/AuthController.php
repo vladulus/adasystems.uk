@@ -58,8 +58,8 @@ class AuthController extends Controller
                 'last_login_at' => now(),
             ]);
 
-            // DUPĂ login OK => mergem în HUB (pagina cu 2 carduri)
-            return redirect()->intended(route('hub'));
+            // DUPĂ login OK => mergem direct în HUB (fără intended pentru a evita redirect la API endpoints)
+            return redirect()->route('hub');
         }
 
         return back()->withErrors([
@@ -87,5 +87,31 @@ class AuthController extends Controller
     public function showPasswordRequest()
     {
         return view('passwords.email');
+    }
+
+    /**
+     * Handle password reset email request
+     */
+    public function sendPasswordResetLink(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        // Check if user exists
+        $user = \App\Models\User::where('email', $request->email)->first();
+
+        // Always show success message (security: don't reveal if email exists)
+        // In production, you would send an actual email here
+        
+        if ($user) {
+            // TODO: Implement actual email sending
+            // Password::sendResetLink($request->only('email'));
+            
+            // For now, log the request
+            \Log::info('Password reset requested for: ' . $request->email);
+        }
+
+        return back()->with('status', 'If an account exists with that email, you will receive password reset instructions shortly.');
     }
 }

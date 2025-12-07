@@ -3,8 +3,8 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Login - Ada Pi Systems</title>
-        <meta name="description" content="Login to Ada Pi Systems IoT telemetry dashboard for fleet management and vehicle monitoring.">
+        <title>Forgot Password - Ada Pi Systems</title>
+        <meta name="description" content="Reset your Ada Pi Systems account password.">
         <meta name="robots" content="noindex, nofollow">
         <link href="https://fonts.bunny.net/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -42,7 +42,7 @@
                 padding: 20px;
             }
 
-            .login-container {
+            .container {
                 background: var(--bg-white);
                 border-radius: 18px;
                 border: 1px solid rgba(148, 163, 184, 0.35);
@@ -52,7 +52,7 @@
                 overflow: hidden;
             }
 
-            .login-header {
+            .header {
                 background: linear-gradient(135deg, #4f46e5, #7c3aed);
                 padding: 2rem;
                 text-align: center;
@@ -66,18 +66,18 @@
                 filter: brightness(0) invert(1);
             }
 
-            .login-header h1 {
+            .header h1 {
                 font-size: 1.5rem;
                 font-weight: 700;
                 margin-bottom: 0.5rem;
             }
 
-            .login-header p {
+            .header p {
                 opacity: 0.9;
                 font-size: 0.9rem;
             }
 
-            .login-body {
+            .body {
                 padding: 2rem;
             }
 
@@ -102,6 +102,27 @@
                 background: rgba(239, 68, 68, 0.1);
                 color: #991b1b;
                 border: 1px solid #ef4444;
+            }
+
+            .alert-info {
+                background: rgba(59, 130, 246, 0.1);
+                color: #1e40af;
+                border: 1px solid #3b82f6;
+            }
+
+            .info-box {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+                font-size: 0.9rem;
+                color: var(--text-gray);
+            }
+
+            .info-box i {
+                color: var(--primary);
+                margin-right: 0.5rem;
             }
 
             .form-group {
@@ -136,67 +157,6 @@
                 color: #9ca3af;
             }
 
-            .password-wrapper {
-                position: relative;
-            }
-
-            .toggle-password {
-                position: absolute;
-                right: 1rem;
-                top: 50%;
-                transform: translateY(-50%);
-                background: none;
-                border: none;
-                color: var(--text-gray);
-                cursor: pointer;
-                font-size: 1rem;
-                padding: 0.25rem;
-                transition: color 0.3s;
-            }
-
-            .toggle-password:hover {
-                color: var(--primary);
-            }
-
-            .form-options {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1.5rem;
-                font-size: 0.9rem;
-            }
-
-            .remember-me {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-
-            .remember-me input[type="checkbox"] {
-                width: auto;
-                cursor: pointer;
-                accent-color: var(--primary);
-            }
-
-            .remember-me label {
-                margin: 0;
-                font-weight: 500;
-                color: var(--text-gray);
-                cursor: pointer;
-            }
-
-            .forgot-password {
-                color: var(--primary);
-                text-decoration: none;
-                font-weight: 500;
-                transition: color 0.3s;
-            }
-
-            .forgot-password:hover {
-                color: var(--primary-dark);
-                text-decoration: underline;
-            }
-
             .btn {
                 width: 100%;
                 padding: 1rem;
@@ -224,13 +184,6 @@
                 box-shadow: 0 14px 30px rgba(79, 70, 229, 0.45);
             }
 
-            .btn-primary:disabled {
-                background: var(--text-gray);
-                cursor: not-allowed;
-                transform: none;
-                box-shadow: none;
-            }
-
             .divider {
                 display: flex;
                 align-items: center;
@@ -250,60 +203,23 @@
                 padding: 0 1rem;
             }
 
-            .back-home {
-                text-align: center;
-            }
-
-            .back-home a {
-                display: inline-flex;
+            .back-link {
+                display: flex;
                 align-items: center;
+                justify-content: center;
                 gap: 0.5rem;
                 color: var(--text-gray);
                 text-decoration: none;
                 font-weight: 500;
-                transition: color 0.3s;
                 font-size: 0.95rem;
+                transition: color 0.3s;
             }
 
-            .back-home a:hover {
+            .back-link:hover {
                 color: var(--primary);
             }
 
-            .features-list {
-                margin-top: 1.5rem;
-                padding-top: 1.5rem;
-                border-top: 1px solid var(--border);
-            }
-
-            .features-list h3 {
-                font-size: 0.9rem;
-                margin-bottom: 1rem;
-                color: var(--text-dark);
-                text-align: center;
-                font-weight: 600;
-            }
-
-            .features-list ul {
-                list-style: none;
-                font-size: 0.85rem;
-                color: var(--text-gray);
-            }
-
-            .features-list li {
-                padding: 0.5rem 0;
-                padding-left: 1.5rem;
-                position: relative;
-            }
-
-            .features-list li:before {
-                content: "✓";
-                position: absolute;
-                left: 0;
-                color: var(--accent);
-                font-weight: bold;
-            }
-
-            .login-footer {
+            .footer {
                 background: var(--bg-light);
                 padding: 1.25rem 2rem;
                 text-align: center;
@@ -312,46 +228,33 @@
             }
 
             @media (max-width: 480px) {
-                .login-header {
+                .header {
                     padding: 1.5rem;
                 }
 
-                .login-header h1 {
+                .header h1 {
                     font-size: 1.25rem;
                 }
 
-                .login-body {
+                .body {
                     padding: 1.5rem;
-                }
-
-                .form-options {
-                    flex-direction: column;
-                    gap: 1rem;
-                    align-items: flex-start;
                 }
             }
         </style>
     </head>
     <body>
-        <div class="login-container">
-            <div class="login-header">
+        <div class="container">
+            <div class="header">
                 <img src="{{ asset('logo.png') }}" alt="Ada Pi Systems" class="logo">
-                <h1>Dashboard Login</h1>
-                <p>Access your IoT telemetry dashboard</p>
+                <h1>Forgot Password</h1>
+                <p>Reset your account password</p>
             </div>
 
-            <div class="login-body">
-                @if(session('success'))
+            <div class="body">
+                @if(session('status'))
                     <div class="alert alert-success">
                         <i class="fas fa-check-circle"></i>
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="alert alert-error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        {{ session('error') }}
+                        {{ session('status') }}
                     </div>
                 @endif
 
@@ -364,7 +267,12 @@
                     </div>
                 @endif
 
-                <form action="{{ route('login.authenticate') }}" method="POST">
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    Enter your email address and we'll send you instructions to reset your password.
+                </div>
+
+                <form action="{{ route('password.email') }}" method="POST">
                     @csrf
                     
                     <div class="form-group">
@@ -380,33 +288,9 @@
                         >
                     </div>
 
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <div class="password-wrapper">
-                            <input 
-                                type="password" 
-                                id="password" 
-                                name="password" 
-                                placeholder="Enter your password"
-                                required
-                            >
-                            <button type="button" class="toggle-password" onclick="togglePassword()">
-                                <i class="fas fa-eye" id="toggleIcon"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="form-options">
-                        <div class="remember-me">
-                            <input type="checkbox" id="remember" name="remember">
-                            <label for="remember">Remember me</label>
-                        </div>
-                        <a href="{{ route('password.request') }}" class="forgot-password">Forgot password?</a>
-                    </div>
-
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Login to Dashboard
+                        <i class="fas fa-paper-plane"></i>
+                        Send Reset Link
                     </button>
                 </form>
 
@@ -414,57 +298,15 @@
                     <span>or</span>
                 </div>
 
-                <div class="back-home">
-                    <a href="{{ url('/') }}">
-                        <i class="fas fa-arrow-left"></i>
-                        Back to Homepage
-                    </a>
-                </div>
-
-                <div class="features-list">
-                    <h3>Dashboard Features</h3>
-                    <ul>
-                        <li>Real-time vehicle monitoring</li>
-                        <li>OBD-II diagnostics</li>
-                        <li>GPS tracking & route history</li>
-                        <li>Fleet analytics</li>
-                        <li>Tachograph compliance</li>
-                    </ul>
-                </div>
+                <a href="{{ route('login') }}" class="back-link">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Login
+                </a>
             </div>
 
-            <div class="login-footer">
+            <div class="footer">
                 <p>&copy; {{ date('Y') }} Ada Pi Systems. All rights reserved.</p>
             </div>
         </div>
-
-        <script>
-            function togglePassword() {
-                const passwordInput = document.getElementById('password');
-                const toggleIcon = document.getElementById('toggleIcon');
-                
-                if (passwordInput.type === 'password') {
-                    passwordInput.type = 'text';
-                    toggleIcon.classList.remove('fa-eye');
-                    toggleIcon.classList.add('fa-eye-slash');
-                } else {
-                    passwordInput.type = 'password';
-                    toggleIcon.classList.remove('fa-eye-slash');
-                    toggleIcon.classList.add('fa-eye');
-                }
-            }
-
-            // Auto-hide alerts after 5 seconds
-            document.addEventListener('DOMContentLoaded', function() {
-                const alerts = document.querySelectorAll('.alert');
-                alerts.forEach(alert => {
-                    setTimeout(() => {
-                        alert.style.transition = 'opacity 0.3s';
-                        alert.style.opacity = '0';
-                        setTimeout(() => alert.remove(), 300);
-                    }, 5000);
-                });
-            });
-        </script>
     </body>
 </html>
