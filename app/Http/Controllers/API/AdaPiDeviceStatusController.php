@@ -50,12 +50,22 @@ class AdaPiDeviceStatusController extends Controller
             $device->save();
         }
 
+        // Build settings payload if settings exist and were updated
+        $settingsPayload = null;
+        if ($device->settings && $device->settings_updated_at) {
+            $settingsPayload = [
+                'version' => $device->settings_updated_at->timestamp,
+                'data' => $device->settings,
+            ];
+        }
+
         return response()->json([
             'status' => 'ok',
             'data' => [
                 'registered' => $registered,
                 'upload_interval' => $device->upload_interval ?? 15,
                 'pending_command' => $pendingCommand,
+                'settings' => $settingsPayload,
                 'device' => [
                     'id'          => $device->id,
                     'device_name' => $device->device_name,
