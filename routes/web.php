@@ -110,6 +110,11 @@ Route::middleware('auth')->group(function () {
         [AdaPiWebDeviceController::class, 'clearDTC']
     )->name('ada-pi.devices.dtc.clear');
 
+    Route::post(
+        '/ada-pi/devices/{device}/retention',
+        [AdaPiWebDeviceController::class, 'updateRetention']
+    )->name('ada-pi.devices.retention');
+
     // HUB – pagina cu 2 carduri (Management + Pi)
     Route::get('/hub', function () {
         return view('app-hub');

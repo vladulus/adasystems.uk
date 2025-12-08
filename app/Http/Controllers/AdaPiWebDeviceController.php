@@ -210,6 +210,24 @@ class AdaPiWebDeviceController extends Controller
     }
 
     /**
+     * Update data retention period
+     */
+    public function updateRetention(Request $request, Device $device)
+    {
+        $validated = $request->validate([
+            'retention_days' => 'required|integer|in:1,7,14,30,60,90'
+        ]);
+
+        $device->retention_days = $validated['retention_days'];
+        $device->save();
+
+        return response()->json([
+            'success' => true,
+            'retention_days' => $device->retention_days
+        ]);
+    }
+
+    /**
      * Acceptă un ADA-Pi:
      * - schimbă status în "active"
      */

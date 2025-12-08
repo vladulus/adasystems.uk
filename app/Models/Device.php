@@ -21,6 +21,7 @@ class Device extends Model
         'pending_command',
         'dtc_codes',
         'dtc_updated_at',
+        'retention_days',
     ];
 
     protected $casts = [

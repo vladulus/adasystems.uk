@@ -74,11 +74,23 @@
                 <div class="stat-label">Avg Fuel</div>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon"><i class="fas fa-satellite"></i></div>
+        <div class="stat-card stat-card-retention">
+            <div class="stat-icon"><i class="fas fa-database"></i></div>
             <div class="stat-content">
                 <div class="stat-value">{{ $stats['total_records'] }}</div>
                 <div class="stat-label">Records (24h)</div>
+            </div>
+            <div class="retention-control">
+                <span class="retention-label">Retention</span>
+                <select id="retentionDays" class="retention-select">
+                    <option value="1" {{ ($device->retention_days ?? 30) == 1 ? 'selected' : '' }}>1 day</option>
+                    <option value="7" {{ ($device->retention_days ?? 30) == 7 ? 'selected' : '' }}>7 days</option>
+                    <option value="14" {{ ($device->retention_days ?? 30) == 14 ? 'selected' : '' }}>14 days</option>
+                    <option value="30" {{ ($device->retention_days ?? 30) == 30 ? 'selected' : '' }}>30 days</option>
+                    <option value="60" {{ ($device->retention_days ?? 30) == 60 ? 'selected' : '' }}>60 days</option>
+                    <option value="90" {{ ($device->retention_days ?? 30) == 90 ? 'selected' : '' }}>90 days</option>
+                </select>
+                <span id="retentionSaved" class="retention-saved"><i class="fas fa-check"></i></span>
             </div>
         </div>
     </div>
@@ -505,6 +517,52 @@
     .stat-label {
         font-size: 12px;
         color: #6b7280;
+    }
+
+    .stat-card-retention {
+        position: relative;
+    }
+
+    .retention-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+        background: #f3f4f6;
+        padding: 6px 10px;
+        border-radius: 10px;
+    }
+
+    .retention-label {
+        font-size: 11px;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .retention-select {
+        padding: 2px 6px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 11px;
+        color: #374151;
+        background: #fff;
+        cursor: pointer;
+        outline: none;
+    }
+
+    .retention-select:focus {
+        border-color: #8b5cf6;
+    }
+
+    .retention-saved {
+        color: #10b981;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        font-size: 12px;
+    }
+
+    .retention-saved.show {
+        opacity: 1;
     }
 
     .dash-grid {
@@ -984,6 +1042,31 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(err => console.error('Failed to save interval:', err));
     }
+
+    // ============================================
+    // Retention Days Selector
+    // ============================================
+    const retentionSelect = document.getElementById('retentionDays');
+    const retentionSaved = document.getElementById('retentionSaved');
+
+    retentionSelect.addEventListener('change', function() {
+        fetch(`/ada-pi/devices/${deviceId}/retention`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ retention_days: this.value })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                retentionSaved.classList.add('show');
+                setTimeout(() => retentionSaved.classList.remove('show'), 2000);
+            }
+        })
+        .catch(err => console.error('Failed to save retention:', err));
+    });
 
     // ============================================
     // DTC (Fault Codes) Functions
