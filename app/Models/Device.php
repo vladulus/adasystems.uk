@@ -22,12 +22,16 @@ class Device extends Model
         'dtc_codes',
         'dtc_updated_at',
         'retention_days',
+        'settings',
+        'settings_updated_at',
     ];
 
     protected $casts = [
         'last_online' => 'datetime',
         'dtc_codes' => 'array',
         'dtc_updated_at' => 'datetime',
+        'settings' => 'array',
+        'settings_updated_at' => 'datetime',
     ];
 
     /**

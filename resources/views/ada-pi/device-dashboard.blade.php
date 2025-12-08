@@ -36,6 +36,9 @@
                 <span id="intervalSaved" class="interval-saved">
                     <i class="fas fa-check"></i>
                 </span>
+                <a href="{{ route('ada-pi.devices.settings', $device) }}" class="btn-settings" title="Device Settings">
+                    <i class="fas fa-cog"></i>
+                </a>
             </div>
             
             <div class="page-header-actions">
@@ -97,52 +100,22 @@
 
     {{-- Main Grid --}}
     <div class="dash-grid">
-        {{-- Column 1: Map + UPS --}}
-        <div class="col-left">
-            {{-- Map --}}
-            <div class="card card-map">
-                <div class="card-header">
-                    <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
-                    <div class="gps-coords" id="gpsCoords">
-                        @if($latestTelemetry && $latestTelemetry->hasGps())
-                            {{ number_format($latestTelemetry->latitude, 5) }}, {{ number_format($latestTelemetry->longitude, 5) }}
-                        @else
-                            No GPS data
-                        @endif
-                    </div>
-                </div>
-                <div id="map" class="map-container"></div>
-            </div>
-
-            {{-- UPS Panel --}}
-            <div class="card card-panel">
-                <div class="card-header">
-                    <h3><i class="fas fa-battery-three-quarters"></i> UPS</h3>
-                </div>
-                <div class="panel-grid">
-                    <div class="panel-item">
-                        <span class="panel-label">Battery</span>
-                        <span class="panel-value" id="upsBattery">{{ $latestTelemetry->battery_percent ?? '--' }}%</span>
-                    </div>
-                    <div class="panel-item">
-                        <span class="panel-label">Voltage</span>
-                        <span class="panel-value" id="upsVoltage">{{ $latestTelemetry->battery_voltage ?? '--' }}V</span>
-                    </div>
-                    <div class="panel-item">
-                        <span class="panel-label">Charging</span>
-                        <span class="panel-value" id="upsCharging">
-                            @if($latestTelemetry && $latestTelemetry->is_charging !== null)
-                                {{ $latestTelemetry->is_charging ? 'Yes' : 'No' }}
-                            @else
-                                --
-                            @endif
-                        </span>
-                    </div>
+        {{-- Column 1: Map (full height) --}}
+        <div class="card card-map">
+            <div class="card-header">
+                <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
+                <div class="gps-coords" id="gpsCoords">
+                    @if($latestTelemetry && $latestTelemetry->hasGps())
+                        {{ number_format($latestTelemetry->latitude, 5) }}, {{ number_format($latestTelemetry->longitude, 5) }}
+                    @else
+                        No GPS data
+                    @endif
                 </div>
             </div>
+            <div id="map" class="map-container"></div>
         </div>
 
-        {{-- Column 2: GPS + Modem + System --}}
+        {{-- Column 2: GPS + Modem + System + UPS --}}
         <div class="col-middle">
             {{-- GPS Panel --}}
             <div class="card card-panel">
@@ -187,11 +160,15 @@
                         <span class="panel-label">Operator</span>
                         <span class="panel-value" id="modemOperator">{{ $latestTelemetry->operator ?? '--' }}</span>
                     </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Data Used</span>
+                        <span class="panel-value" id="modemData">{{ $latestTelemetry->data_used ?? '--' }} MB</span>
+                    </div>
                 </div>
             </div>
 
             {{-- System Panel --}}
-            <div class="card card-panel card-system">
+            <div class="card card-panel">
                 <div class="card-header">
                     <h3><i class="fas fa-microchip"></i> System</h3>
                 </div>
@@ -214,44 +191,115 @@
                     </div>
                 </div>
             </div>
+
+            {{-- UPS Panel --}}
+            <div class="card card-panel">
+                <div class="card-header">
+                    <h3><i class="fas fa-battery-three-quarters"></i> UPS</h3>
+                </div>
+                <div class="panel-grid">
+                    <div class="panel-item">
+                        <span class="panel-label">Battery</span>
+                        <span class="panel-value" id="upsBattery">{{ $latestTelemetry->battery_percent ?? '--' }}%</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Voltage</span>
+                        <span class="panel-value" id="upsVoltage">{{ $latestTelemetry->battery_voltage ?? '--' }}V</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Charging</span>
+                        <span class="panel-value" id="upsCharging">
+                            @if($latestTelemetry && $latestTelemetry->is_charging !== null)
+                                {{ $latestTelemetry->is_charging ? 'Yes' : 'No' }}
+                            @else
+                                --
+                            @endif
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        {{-- Column 3: OBD-II --}}
+        {{-- Column 3: OBD-II Extended --}}
         <div class="card card-panel card-obd">
             <div class="card-header">
                 <h3><i class="fas fa-car"></i> OBD-II</h3>
             </div>
-            <div class="panel-grid">
-                <div class="panel-item">
-                    <span class="panel-label">RPM</span>
-                    <span class="panel-value" id="obdRpm">{{ $latestTelemetry->rpm ?? '--' }}</span>
+            
+            {{-- Standard PIDs --}}
+            <div class="obd-section">
+                <div class="obd-section-title">Standard</div>
+                <div class="panel-grid obd-grid">
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">RPM</span>
+                        <span class="panel-value" id="obdRpm">{{ $latestTelemetry->rpm ?? '--' }}</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">Speed</span>
+                        <span class="panel-value" id="obdSpeed">{{ $latestTelemetry->vehicle_speed ?? '--' }} km/h</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">Coolant</span>
+                        <span class="panel-value" id="obdCoolant">{{ $latestTelemetry->coolant_temp ?? '--' }}°C</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">Fuel</span>
+                        <span class="panel-value" id="obdFuel">{{ $latestTelemetry->fuel_level ?? '--' }}%</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">Throttle</span>
+                        <span class="panel-value" id="obdThrottle">{{ $latestTelemetry->throttle ?? '--' }}%</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">Load</span>
+                        <span class="panel-value" id="obdLoad">{{ $latestTelemetry->engine_load ?? '--' }}%</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">Intake</span>
+                        <span class="panel-value" id="obdIntake">{{ $latestTelemetry->intake_temp ?? '--' }}°C</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">Voltage</span>
+                        <span class="panel-value" id="obdVoltage">{{ $latestTelemetry->voltage ?? '--' }}V</span>
+                    </div>
                 </div>
-                <div class="panel-item">
-                    <span class="panel-label">Speed</span>
-                    <span class="panel-value" id="obdSpeed">{{ $latestTelemetry->vehicle_speed ?? '--' }} km/h</span>
-                </div>
-                <div class="panel-item">
-                    <span class="panel-label">Coolant</span>
-                    <span class="panel-value" id="obdCoolant">{{ $latestTelemetry->coolant_temp ?? '--' }}°C</span>
-                </div>
-                <div class="panel-item">
-                    <span class="panel-label">Fuel</span>
-                    <span class="panel-value" id="obdFuel">{{ $latestTelemetry->fuel_level ?? '--' }}%</span>
-                </div>
-                <div class="panel-item">
-                    <span class="panel-label">Throttle</span>
-                    <span class="panel-value" id="obdThrottle">{{ $latestTelemetry->throttle ?? '--' }}%</span>
-                </div>
-                <div class="panel-item">
-                    <span class="panel-label">Engine Load</span>
-                    <span class="panel-value" id="obdLoad">{{ $latestTelemetry->engine_load ?? '--' }}%</span>
+            </div>
+
+            {{-- Diesel PIDs --}}
+            <div class="obd-section">
+                <div class="obd-section-title">Diesel</div>
+                <div class="panel-grid obd-grid">
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">Boost</span>
+                        <span class="panel-value" id="obdBoost">{{ $latestTelemetry->boost_pressure ?? '--' }} kPa</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">Rail</span>
+                        <span class="panel-value" id="obdRail">{{ $latestTelemetry->rail_pressure ?? '--' }} MPa</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">EGR</span>
+                        <span class="panel-value" id="obdEgr">{{ $latestTelemetry->egr ?? '--' }}%</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">DPF In</span>
+                        <span class="panel-value" id="obdDpfIn">{{ $latestTelemetry->dpf_temp_in ?? '--' }}°C</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">DPF Out</span>
+                        <span class="panel-value" id="obdDpfOut">{{ $latestTelemetry->dpf_temp_out ?? '--' }}°C</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label obd-label">Soot</span>
+                        <span class="panel-value" id="obdSoot">{{ $latestTelemetry->dpf_soot ?? '--' }}%</span>
+                    </div>
                 </div>
             </div>
             
             {{-- DTC Section --}}
             <div class="dtc-section">
                 <div class="dtc-header">
-                    <span class="dtc-title"><i class="fas fa-exclamation-triangle"></i> Fault Codes</span>
+                    <span class="dtc-title"><i class="fas fa-exclamation-triangle"></i> DTC Codes</span>
                     <span class="dtc-count" id="dtcCount">0 codes</span>
                 </div>
                 <div class="dtc-list" id="dtcList">
@@ -397,6 +445,31 @@
 
     .interval-saved.show {
         opacity: 1;
+    }
+
+    .btn-settings {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        color: #6b7280;
+        text-decoration: none;
+        transition: all 0.15s ease;
+        margin-left: 8px;
+    }
+
+    .btn-settings:hover {
+        background: #8b5cf6;
+        border-color: #8b5cf6;
+        color: #fff;
+    }
+
+    .btn-settings i {
+        font-size: 14px;
     }
 
     .last-seen {
@@ -572,34 +645,20 @@
         align-items: stretch;
     }
 
-    .col-left, .col-middle {
+    .col-middle {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
     }
 
-    .col-left .card-map {
-        flex: 1;
-    }
-
-    .col-middle .card-system {
-        flex: 1;
+    .card-map {
+        display: flex;
+        flex-direction: column;
     }
 
     .card-obd {
         display: flex;
         flex-direction: column;
-    }
-
-    .card-obd .dtc-section {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .card-obd .dtc-list {
-        flex: 1;
-        min-height: 80px;
     }
 
     .card {
@@ -639,15 +698,39 @@
     }
 
     .map-container {
-        height: 100%;
-        min-height: 350px;
+        flex: 1;
+        min-height: 500px;
         background: #f3f4f6;
+    }
+
+    /* OBD Sections */
+    .obd-section {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .obd-section-title {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #9ca3af;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+
+    .obd-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .obd-label {
+        color: #8b5cf6 !important;
+        font-weight: 600;
     }
 
     /* DTC Section Styles */
     .dtc-section {
-        border-top: 1px solid #f3f4f6;
-        padding: 14px;
+        padding: 12px 14px;
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -687,7 +770,8 @@
         border: 2px solid #dc2626;
         border-radius: 8px;
         flex: 1;
-        min-height: 100px;
+        min-height: 60px;
+        max-height: 120px;
         overflow-y: auto;
     }
 
@@ -869,7 +953,7 @@
         .dash-grid {
             grid-template-columns: 1fr 1fr;
         }
-        .col-left {
+        .card-map {
             grid-column: span 2;
         }
         .col-middle {
@@ -881,13 +965,16 @@
         .stats-row {
             grid-template-columns: repeat(2, 1fr);
         }
+        .map-container {
+            min-height: 350px;
+        }
     }
 
     @media (max-width: 640px) {
         .dash-grid {
             grid-template-columns: 1fr;
         }
-        .col-left, .col-middle, .card-obd {
+        .card-map, .col-middle, .card-obd {
             grid-column: span 1;
         }
         .stats-row {
@@ -901,6 +988,9 @@
         .page-header-actions {
             width: 100%;
             justify-content: space-between;
+        }
+        .map-container {
+            min-height: 300px;
         }
     }
 </style>
@@ -960,16 +1050,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('gpsSpeed').textContent = (t.gps.speed ?? '--') + ' km/h';
                     document.getElementById('gpsSatellites').textContent = t.gps.satellites ?? '--';
 
-                    // OBD
+                    // OBD Standard
                     document.getElementById('obdRpm').textContent = t.obd.rpm ?? '--';
                     document.getElementById('obdSpeed').textContent = (t.obd.speed ?? '--') + ' km/h';
                     document.getElementById('obdCoolant').textContent = (t.obd.coolant ?? '--') + '°C';
                     document.getElementById('obdFuel').textContent = (t.obd.fuel ?? '--') + '%';
+                    document.getElementById('obdThrottle').textContent = (t.obd.throttle ?? '--') + '%';
+                    document.getElementById('obdLoad').textContent = (t.obd.load ?? '--') + '%';
+                    document.getElementById('obdIntake').textContent = (t.obd.intake_temp ?? '--') + '°C';
+                    document.getElementById('obdVoltage').textContent = (t.obd.voltage ?? '--') + 'V';
+                    
+                    // OBD Diesel
+                    document.getElementById('obdBoost').textContent = (t.obd.boost ?? '--') + ' kPa';
+                    document.getElementById('obdRail').textContent = (t.obd.rail ?? '--') + ' MPa';
+                    document.getElementById('obdEgr').textContent = (t.obd.egr ?? '--') + '%';
+                    document.getElementById('obdDpfIn').textContent = (t.obd.dpf_in ?? '--') + '°C';
+                    document.getElementById('obdDpfOut').textContent = (t.obd.dpf_out ?? '--') + '°C';
+                    document.getElementById('obdSoot').textContent = (t.obd.soot ?? '--') + '%';
 
                     // Modem
                     document.getElementById('modemSignal').textContent = (t.modem.signal ?? '--') + ' dBm';
                     document.getElementById('modemNetwork').textContent = t.modem.network ?? '--';
                     document.getElementById('modemOperator').textContent = t.modem.operator ?? '--';
+                    document.getElementById('modemData').textContent = (t.modem.data_used ?? '--') + ' MB';
 
                     // UPS
                     document.getElementById('upsBattery').textContent = (t.ups.battery ?? '--') + '%';

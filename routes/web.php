@@ -115,6 +115,21 @@ Route::middleware('auth')->group(function () {
         [AdaPiWebDeviceController::class, 'updateRetention']
     )->name('ada-pi.devices.retention');
 
+    Route::get(
+        '/ada-pi/devices/{device}/settings',
+        [AdaPiWebDeviceController::class, 'settings']
+    )->name('ada-pi.devices.settings');
+
+    Route::post(
+        '/ada-pi/devices/{device}/settings',
+        [AdaPiWebDeviceController::class, 'saveSettings']
+    )->name('ada-pi.devices.settings.save');
+
+    Route::post(
+        '/ada-pi/devices/{device}/command',
+        [AdaPiWebDeviceController::class, 'sendCommand']
+    )->name('ada-pi.devices.command');
+
     // HUB – pagina cu 2 carduri (Management + Pi)
     Route::get('/hub', function () {
         return view('app-hub');

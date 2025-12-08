@@ -106,25 +106,36 @@ class AdaPiDeviceStatusController extends Controller
             'heading'     => $gps['heading'] ?? $gps['course'] ?? null,
             'satellites'  => $gps['satellites'] ?? $gps['sats'] ?? null,
 
-            // OBD (nested under 'values')
+            // OBD Standard
             'rpm'           => $this->nullIfZero($obdValues['rpm'] ?? null),
             'vehicle_speed' => $this->nullIfZero($obdValues['speed'] ?? $obdValues['vehicle_speed'] ?? null),
             'coolant_temp'  => $this->nullIfZero($obdValues['coolant'] ?? $obdValues['coolant_temp'] ?? null),
             'fuel_level'    => $this->nullIfZero($obdValues['fuel_level'] ?? $obdValues['fuel'] ?? null),
             'throttle'      => $this->nullIfZero($obdValues['throttle'] ?? null),
             'engine_load'   => $this->nullIfZero($obdValues['load'] ?? $obdValues['engine_load'] ?? null),
+            'intake_temp'   => $this->nullIfZero($obdValues['intake_temp'] ?? null),
+            'voltage'       => $this->nullIfZero($obdValues['voltage'] ?? null),
 
-            // Modem (signal nested)
+            // OBD Diesel
+            'boost_pressure' => $this->nullIfZero($obdValues['boost_pressure'] ?? $obdValues['boost'] ?? null),
+            'rail_pressure'  => $this->nullIfZero($obdValues['rail_pressure'] ?? $obdValues['rail'] ?? null),
+            'egr'            => $this->nullIfZero($obdValues['egr'] ?? null),
+            'dpf_temp_in'    => $this->nullIfZero($obdValues['dpf_temp_in'] ?? null),
+            'dpf_temp_out'   => $this->nullIfZero($obdValues['dpf_temp_out'] ?? null),
+            'dpf_soot'       => $this->nullIfZero($obdValues['dpf_soot'] ?? null),
+
+            // Modem
             'signal_strength' => $modemSignal['rssi'] ?? $modemSignal['rsrp'] ?? null,
             'network_type'    => $modem['network_mode'] ?? $modem['network'] ?? $modem['type'] ?? null,
             'operator'        => $modem['operator'] ?? null,
+            'data_used'       => $modem['data_used'] ?? $modem['data'] ?? null,
 
             // UPS
             'battery_percent' => $ups['percent'] ?? $ups['battery'] ?? null,
             'battery_voltage' => $ups['voltage'] ?? null,
             'is_charging'     => $ups['charging'] ?? null,
 
-            // System (nested structure: system.cpu.temp, system.memory.percent, etc.)
+            // System
             'cpu_temp'     => $system['cpu']['temp'] ?? $system['cpu_temp'] ?? $system['temp'] ?? null,
             'cpu_usage'    => $system['cpu']['usage'] ?? $system['cpu_usage'] ?? $system['cpu'] ?? null,
             'memory_usage' => $system['memory']['percent'] ?? $system['memory_usage'] ?? $system['memory'] ?? null,

@@ -78,11 +78,22 @@ class AdaPiWebDeviceController extends Controller
                     'speed' => $latestTelemetry->vehicle_speed,
                     'coolant' => $latestTelemetry->coolant_temp,
                     'fuel' => $latestTelemetry->fuel_level,
+                    'throttle' => $latestTelemetry->throttle,
+                    'load' => $latestTelemetry->engine_load,
+                    'intake_temp' => $latestTelemetry->intake_temp,
+                    'voltage' => $latestTelemetry->voltage,
+                    'boost' => $latestTelemetry->boost_pressure,
+                    'rail' => $latestTelemetry->rail_pressure,
+                    'egr' => $latestTelemetry->egr,
+                    'dpf_in' => $latestTelemetry->dpf_temp_in,
+                    'dpf_out' => $latestTelemetry->dpf_temp_out,
+                    'soot' => $latestTelemetry->dpf_soot,
                 ],
                 'modem' => [
                     'signal' => $latestTelemetry->signal_strength,
                     'network' => $latestTelemetry->network_type,
                     'operator' => $latestTelemetry->operator,
+                    'data_used' => $latestTelemetry->data_used,
                 ],
                 'ups' => [
                     'battery' => $latestTelemetry->battery_percent,
@@ -144,19 +155,15 @@ class AdaPiWebDeviceController extends Controller
         $prev = null;
 
         foreach ($telemetry as $t) {
-            // Skip if current has no valid coords
             if (!$t->latitude || !$t->longitude) {
                 continue;
             }
-        
-            // Calculate distance only if prev also has valid coords
             if ($prev && $prev->latitude && $prev->longitude) {
                 $distance += $this->haversine(
                     $prev->latitude, $prev->longitude,
                     $t->latitude, $t->longitude
                 );
             }
-            
             $prev = $t;
         }
 
@@ -168,7 +175,7 @@ class AdaPiWebDeviceController extends Controller
      */
     private function haversine($lat1, $lon1, $lat2, $lon2): float
     {
-        $r = 6371; // km
+        $r = 6371;
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
         $a = sin($dLat/2) * sin($dLat/2) +
@@ -186,7 +193,6 @@ class AdaPiWebDeviceController extends Controller
         $device->pending_command = 'read_dtc';
         $device->save();
 
-        // Return current codes if available
         return response()->json([
             'success' => true,
             'message' => 'Command queued. Codes will update on next device sync.',
@@ -228,26 +234,145 @@ class AdaPiWebDeviceController extends Controller
     }
 
     /**
-     * Acceptă un ADA-Pi:
-     * - schimbă status în "active"
+     * Device settings page
+     */
+    public function settings(Device $device)
+    {
+        $settings = $device->settings ?? $this->getDefaultSettings();
+
+        return view('ada-pi.device-settings', [
+            'device' => $device,
+            'settings' => $settings,
+        ]);
+    }
+
+    /**
+     * Save device settings
+     */
+    public function saveSettings(Request $request, Device $device)
+    {
+        $settings = [
+            'cloud' => [
+                'upload_url' => $request->input('cloud_upload_url'),
+                'logs_url' => $request->input('cloud_logs_url'),
+            ],
+            'wifi' => [
+                'enabled' => $request->has('wifi_enabled'),
+                'ssid' => $request->input('wifi_ssid'),
+                'password' => $request->input('wifi_password'),
+                'dhcp' => $request->input('wifi_dhcp') == '1',
+                'ip' => $request->input('wifi_ip'),
+                'gateway' => $request->input('wifi_gateway'),
+                'dns' => $request->input('wifi_dns'),
+            ],
+            'bluetooth' => [
+                'enabled' => $request->has('bluetooth_enabled'),
+                'discoverable' => $request->has('bluetooth_discoverable'),
+                'name' => $request->input('bluetooth_name'),
+            ],
+            'modem' => [
+                'apn' => $request->input('modem_apn'),
+                'username' => $request->input('modem_username'),
+                'password' => $request->input('modem_password'),
+                'network_mode' => $request->input('modem_network_mode', 'auto'),
+                'roaming' => $request->has('modem_roaming'),
+            ],
+            'gps' => [
+                'enabled' => $request->has('gps_enabled'),
+                'update_rate' => (int) $request->input('gps_update_rate', 1),
+            ],
+            'obd' => [
+                'port' => $request->input('obd_port', 'auto'),
+                'protocol' => $request->input('obd_protocol', 'auto'),
+                'poll_interval' => (int) $request->input('obd_poll_interval', 2),
+                'excluded_ports' => $request->input('obd_excluded_ports'),
+            ],
+            'ups' => [
+                'low_threshold' => (int) $request->input('ups_low_threshold', 15),
+                'auto_power_on' => $request->has('ups_auto_power_on'),
+                'shutdown_delay' => (int) $request->input('ups_shutdown_delay', 30),
+            ],
+            'fan' => [
+                'mode' => $request->input('fan_mode', 'auto'),
+                'threshold' => (int) $request->input('fan_threshold', 50),
+                'speed' => (int) $request->input('fan_speed', 100),
+            ],
+            'system' => [
+                'timezone' => $request->input('system_timezone', 'UTC'),
+                'hostname' => $request->input('system_hostname'),
+                'auto_update' => $request->has('system_auto_update'),
+                'reboot_schedule' => $request->input('system_reboot_schedule', 'disabled'),
+            ],
+        ];
+
+        if ($request->filled('device_name')) {
+            $device->device_name = $request->input('device_name');
+        }
+
+        $device->settings = $settings;
+        $device->settings_updated_at = now();
+        $device->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Settings saved successfully. Will sync on next device upload.',
+        ]);
+    }
+
+    /**
+     * Send command to device
+     */
+    public function sendCommand(Request $request, Device $device)
+    {
+        $validated = $request->validate([
+            'command' => 'required|string|in:reboot,factory_reset,update,restart_services'
+        ]);
+
+        $device->pending_command = $validated['command'];
+        $device->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Command queued. Will execute on next device sync.',
+            'command' => $validated['command'],
+        ]);
+    }
+
+    /**
+     * Get default settings structure
+     */
+    private function getDefaultSettings(): array
+    {
+        return [
+            'cloud' => ['upload_url' => '', 'logs_url' => ''],
+            'wifi' => ['enabled' => true, 'ssid' => '', 'password' => '', 'dhcp' => true, 'ip' => '', 'gateway' => '', 'dns' => ''],
+            'bluetooth' => ['enabled' => true, 'discoverable' => false, 'name' => ''],
+            'modem' => ['apn' => '', 'username' => '', 'password' => '', 'network_mode' => 'auto', 'roaming' => false],
+            'gps' => ['enabled' => true, 'update_rate' => 1],
+            'obd' => ['port' => 'auto', 'protocol' => 'auto', 'poll_interval' => 2, 'excluded_ports' => '/dev/ttyUSB2,/dev/ttyUSB3'],
+            'ups' => ['low_threshold' => 15, 'auto_power_on' => true, 'shutdown_delay' => 30],
+            'fan' => ['mode' => 'auto', 'threshold' => 50, 'speed' => 100],
+            'system' => ['timezone' => 'UTC', 'hostname' => '', 'auto_update' => false, 'reboot_schedule' => 'disabled'],
+        ];
+    }
+
+    /**
+     * Acceptă un ADA-Pi
      */
     public function accept(Device $device): RedirectResponse
     {
         $device->status = 'active';
         $device->save();
-
         return back()->with('status', "Device {$device->device_name} approved.");
     }
 
     /**
-     * Refuză un ADA-Pi:
-     * - marcăm status "inactive"
+     * Refuză un ADA-Pi
      */
     public function refuse(Device $device): RedirectResponse
     {
         $device->status = 'inactive';
         $device->save();
-
         return back()->with('status', "Device {$device->device_name} refused.");
     }
 }
