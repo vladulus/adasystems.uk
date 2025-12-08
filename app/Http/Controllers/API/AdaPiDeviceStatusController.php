@@ -38,6 +38,9 @@ class AdaPiDeviceStatusController extends Controller
             // Salvăm telemetria doar dacă device-ul e activ
             if ($device->status === 'active') {
                 $this->saveTelemetry($device, $request);
+                
+                // Sync config from device if settings are empty
+                $this->syncConfigFromDevice($device, $request);
             }
         }
 
@@ -162,10 +165,77 @@ class AdaPiDeviceStatusController extends Controller
                 'fan'       => $request->input('fan', []),
                 'bluetooth' => $request->input('bluetooth', []),
                 'network'   => $request->input('network', []),
+                'config'    => $request->input('config', []),
             ],
         ]);
 
         \Log::debug("Telemetry saved for device {$device->device_name}");
+    }
+
+    /**
+     * Sync config from device to settings if settings are empty
+     */
+    private function syncConfigFromDevice(Device $device, Request $request): void
+    {
+        $config = $request->input('config');
+        if (!$config) {
+            return;
+        }
+
+        $settings = $device->settings ?? [];
+        $updated = false;
+
+        // Modem settings - sync if cloud is empty
+        if (isset($config['modem'])) {
+            if (!isset($settings['modem'])) {
+                $settings['modem'] = [];
+            }
+            
+            if (empty($settings['modem']['apn']) && !empty($config['modem']['apn'])) {
+                $settings['modem']['apn'] = $config['modem']['apn'];
+                $settings['modem']['apn_username'] = $config['modem']['apn_username'] ?? '';
+                $settings['modem']['apn_password'] = $config['modem']['apn_password'] ?? '';
+                $settings['modem']['failover_enabled'] = $config['modem']['failover_enabled'] ?? true;
+                $updated = true;
+                \Log::info("Synced modem config from device {$device->device_name}");
+            }
+        }
+
+        // OBD settings - sync if cloud is empty
+        if (isset($config['obd'])) {
+            if (!isset($settings['obd'])) {
+                $settings['obd'] = [];
+            }
+            
+            if (!isset($settings['obd']['enabled']) && isset($config['obd']['enabled'])) {
+                $settings['obd']['enabled'] = $config['obd']['enabled'];
+                $settings['obd']['connection'] = $config['obd']['connection'] ?? 'none';
+                $settings['obd']['bluetooth_mac'] = $config['obd']['bluetooth_mac'] ?? '';
+                $settings['obd']['usb_port'] = $config['obd']['usb_port'] ?? '';
+                $updated = true;
+                \Log::info("Synced OBD config from device {$device->device_name}");
+            }
+        }
+
+        // UPS settings - sync if cloud is empty
+        if (isset($config['ups'])) {
+            if (!isset($settings['ups'])) {
+                $settings['ups'] = [];
+            }
+            
+            if (empty($settings['ups']['type']) && !empty($config['ups']['type'])) {
+                $settings['ups']['type'] = $config['ups']['type'];
+                $settings['ups']['shutdown_pct'] = $config['ups']['shutdown_pct'] ?? 10;
+                $updated = true;
+                \Log::info("Synced UPS config from device {$device->device_name}");
+            }
+        }
+
+        if ($updated) {
+            $device->settings = $settings;
+            $device->settings_updated_at = now();
+            $device->save();
+        }
     }
 
     /**
