@@ -23,16 +23,17 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
-        'phone',              // NOU
-        'department',         // NOU
+        'phone',
+        'department',
         'parent_id',
         'is_active',
-        'status',             // NOU
+        'status',
         'vehicle_id',
+        'device_id',
         'last_login',
-        'last_login_at',      // NOU
+        'last_login_at',
         'email_verified_at',
-        'created_by',         // NOU
+        'created_by',
     ];
 
     /**
@@ -53,9 +54,9 @@ class User extends Authenticatable implements JWTSubject
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
-        'status' => 'string',           // NOU
+        'status' => 'string',
         'last_login' => 'datetime',
-        'last_login_at' => 'datetime',  // NOU
+        'last_login_at' => 'datetime',
     ];
 
     /**
@@ -80,156 +81,265 @@ class User extends Authenticatable implements JWTSubject
             'permissions' => $this->getAllPermissions()->pluck('name')->toArray(),
             'parent_id' => $this->parent_id,
             'vehicle_id' => $this->vehicle_id,
-            'device_id' => $this->vehicle?->device?->device_name ?? null, // For backward compatibility with Pi
+            'device_id' => $this->vehicle?->device?->device_name ?? null,
         ];
     }
 
+    // =========================================================================
+    // RELAȚII EXISTENTE
+    // =========================================================================
+
     /**
-     * Relationships
+     * Parent user (for drivers belonging to a superuser)
      */
-    
-    // Parent user (for drivers belonging to a superuser)
     public function parent()
     {
         return $this->belongsTo(User::class, 'parent_id');
     }
 
-    // Child users (drivers that belong to this superuser)
-    public function drivers()
+    /**
+     * Child users (drivers that belong to this superuser) - LEGACY
+     */
+    public function childUsers()
     {
         return $this->hasMany(User::class, 'parent_id');
     }
 
-    // Vehicle assigned to this user (driver)
+    /**
+     * Vehicle assigned to this user (driver)
+     */
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class, 'vehicle_id');
     }
 
-    // Subscription (for superusers only)
+    /**
+     * Subscription (for superusers only)
+     */
     public function subscription()
     {
         return $this->hasOne(UserSubscription::class, 'superuser_id');
     }
 
     /**
-     * Helper methods
+     * Creator of this user
      */
-	public function isRoot(): bool
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Driver profile (if this user is linked to a driver)
+     */
+    public function driverProfile()
+    {
+        return $this->hasOne(Driver::class, 'user_id');
+    }
+
+    // =========================================================================
+    // RELAȚII NOI - PIVOT TABLES
+    // =========================================================================
+
+    /**
+     * Pentru ADMIN: Superuserii (clienții) pe care îi administrează
+     * many-to-many prin admin_superuser
+     */
+    public function managedSuperusers()
+    {
+        return $this->belongsToMany(User::class, 'admin_superuser', 'admin_id', 'superuser_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Pentru SUPERUSER: Adminii care îl administrează
+     * many-to-many prin admin_superuser
+     */
+    public function managingAdmins()
+    {
+        return $this->belongsToMany(User::class, 'admin_superuser', 'superuser_id', 'admin_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Pentru ADMIN: Device-urile pe care le administrează
+     * many-to-many prin admin_device
+     */
+    public function managedDevices()
+    {
+        return $this->belongsToMany(Device::class, 'admin_device', 'admin_id', 'device_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Pentru SUPERUSER: Device-urile pe care le deține (owner)
+     * one-to-many (un device are un singur owner)
+     */
+    public function ownedDevices()
+    {
+        return $this->hasMany(Device::class, 'owner_id');
+    }
+
+    /**
+     * Pentru SUPERUSER: Vehiculele pe care le deține
+     * one-to-many
+     */
+    public function ownedVehicles()
+    {
+        return $this->hasMany(Vehicle::class, 'owner_id');
+    }
+
+    /**
+     * Pentru SUPERUSER: Driverii pe care îi angajează
+     * many-to-many prin driver_superuser
+     */
+    public function employedDrivers()
+    {
+        return $this->belongsToMany(Driver::class, 'driver_superuser', 'superuser_id', 'driver_id')
+            ->withPivot('hired_from', 'hired_to', 'is_active')
+            ->withTimestamps();
+    }
+
+    // =========================================================================
+    // HELPER METHODS - ROLE CHECKS
+    // =========================================================================
+
+    public function isRoot(): bool
     {
         return $this->email === config('ada.root_email');
     }
 
     /**
-     * Superadmin „efectiv”: root sau user cu rolul super-admin.
+     * Superadmin „efectiv": root sau user cu rolul super-admin.
      */
     public function isEffectiveSuperAdmin(): bool
     {
         return $this->isRoot() || $this->hasRole('super-admin');
     }
-    
-    // Check if user is a super-admin or admin
+
     public function isAdmin()
     {
         return $this->hasRole(['super-admin', 'admin']);
     }
 
-    // Check if user is a super-admin
     public function isSuperAdmin()
     {
         return $this->hasRole('super-admin');
     }
 
-    // Check if user is a client (superuser)
     public function isSuperuser()
     {
         return $this->hasRole('superuser');
     }
 
-    // Check if user is a driver
     public function isDriver()
     {
-        return $this->hasRole('user') && !is_null($this->parent_id);
+        return $this->hasRole('user');
     }
 
-    // Get all drivers for this superuser
-    public function getDrivers()
-    {
-        if ($this->isSuperuser()) {
-            return $this->drivers;
-        }
-        return collect([]);
-    }
-
-    // Get parent superuser (for drivers)
-    public function getSuperuser()
-    {
-        if ($this->isDriver()) {
-            return $this->parent;
-        }
-        return null;
-    }
-
-    // Get the device (Pi) for this user
-    public function getDevice()
-    {
-        return $this->vehicle?->device;
-    }
+    // =========================================================================
+    // HELPER METHODS - VISIBILITY (based on role and assignments)
+    // =========================================================================
 
     /**
      * Get all devices visible to this user based on role
      */
     public function getVisibleDevices()
     {
-        if ($this->isSuperAdmin()) {
-            // Super-admin sees ALL devices
+        if ($this->isEffectiveSuperAdmin()) {
             return Device::all();
         }
 
         if ($this->hasRole('admin')) {
-            // Admin sees devices assigned to them
-            return Device::where('owner_id', $this->id)->get();
+            // Admin vede device-urile pe care le administrează
+            return $this->managedDevices;
         }
 
         if ($this->isSuperuser()) {
-            // Superuser sees devices in their vehicles
-            return Device::whereHas('vehicle', function($query) {
-                $query->where('owner_id', $this->id);
-            })->get();
+            // Superuser vede device-urile pe care le deține
+            return $this->ownedDevices;
         }
 
-        // Driver sees only their own device
+        // Driver vede doar device-ul mașinii lui
         if ($this->vehicle && $this->vehicle->device) {
             return collect([$this->vehicle->device]);
         }
 
         return collect([]);
     }
-	/**
-     * Management system relationships
+
+    /**
+     * Get all vehicles visible to this user based on role
      */
-    
-    // Creator of this user
-    public function createdBy()
+    public function getVisibleVehicles()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        if ($this->isEffectiveSuperAdmin()) {
+            return Vehicle::all();
+        }
+
+        if ($this->hasRole('admin')) {
+            // Admin vede vehiculele superuserilor pe care îi administrează
+            $superuserIds = $this->managedSuperusers->pluck('id');
+            return Vehicle::whereIn('owner_id', $superuserIds)->get();
+        }
+
+        if ($this->isSuperuser()) {
+            return $this->ownedVehicles;
+        }
+
+        // Driver vede doar mașina lui
+        if ($this->vehicle) {
+            return collect([$this->vehicle]);
+        }
+
+        return collect([]);
     }
 
-    // Driver profile (if this user is linked to a driver)
-    public function driver()
+    /**
+     * Get all drivers visible to this user based on role
+     */
+    public function getVisibleDrivers()
     {
-        return $this->hasOne(Driver::class, 'user_id');
+        if ($this->isEffectiveSuperAdmin()) {
+            return Driver::all();
+        }
+
+        if ($this->hasRole('admin')) {
+            // Admin vede driverii superuserilor pe care îi administrează
+            $superuserIds = $this->managedSuperusers->pluck('id');
+            return Driver::whereHas('employers', function($q) use ($superuserIds) {
+                $q->whereIn('superuser_id', $superuserIds);
+            })->get();
+        }
+
+        if ($this->isSuperuser()) {
+            return $this->employedDrivers;
+        }
+
+        return collect([]);
     }
 
-    // Devices created by this user
-    public function devices()
+    /**
+     * Get all superusers visible to this user based on role
+     */
+    public function getVisibleSuperusers()
     {
-        return $this->hasMany(Device::class, 'created_by');
+        if ($this->isEffectiveSuperAdmin()) {
+            return User::role('superuser')->get();
+        }
+
+        if ($this->hasRole('admin')) {
+            return $this->managedSuperusers;
+        }
+
+        return collect([]);
     }
 
-    // Vehicles created by this user
-    public function vehicles()
+    /**
+     * Get the device (Pi) for this user - for drivers
+     */
+    public function getDevice()
     {
-        return $this->hasMany(Vehicle::class, 'created_by');
+        return $this->vehicle?->device;
     }
 }

@@ -18,26 +18,31 @@ class Device extends Model
         'last_online',
         'ip_address',
         'upload_interval',
-        // dacă în viitor vrei să salvezi created_by / updated_by prin fill():
-        // 'created_by',
-        // 'updated_by',
+        'pending_command',
+        'dtc_codes',
+        'dtc_updated_at',
     ];
 
     protected $casts = [
         'last_online' => 'datetime',
+        'dtc_codes' => 'array',
+        'dtc_updated_at' => 'datetime',
     ];
 
     /**
      * Alias simplu: $device->name => $device->device_name
-     * (ca să nu crape UI-ul dacă folosește "name")
      */
     public function getNameAttribute()
     {
         return $this->device_name;
     }
 
+    // =========================================================================
+    // RELAȚII
+    // =========================================================================
+
     /**
-     * Get the owner (admin/superuser) of this device
+     * Owner (superuser) - un device are un singur proprietar
      */
     public function owner()
     {
@@ -45,7 +50,17 @@ class Device extends Model
     }
 
     /**
-     * Get the vehicle where this device is installed
+     * Adminii care administrează acest device
+     * many-to-many prin admin_device
+     */
+    public function admins()
+    {
+        return $this->belongsToMany(User::class, 'admin_device', 'device_id', 'admin_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Vehiculul unde este instalat device-ul (1:1)
      */
     public function vehicle()
     {
@@ -53,23 +68,27 @@ class Device extends Model
     }
 
     /**
-     * User-ul care a creat device-ul
+     * Telemetrie - toate înregistrările
      */
-    public function createdBy()
+    public function telemetry()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->hasMany(DeviceTelemetry::class);
     }
 
     /**
-     * User-ul care a modificat ultima dată device-ul
+     * Ultima înregistrare telemetrie
      */
-    public function updatedBy()
+    public function latestTelemetry()
     {
-        return $this->belongsTo(User::class, 'updated_by');
+        return $this->hasOne(DeviceTelemetry::class)->latestOfMany('recorded_at');
     }
 
+    // =========================================================================
+    // HELPER METHODS
+    // =========================================================================
+
     /**
-     * Check if device is currently assigned to a vehicle
+     * Verifică dacă device-ul este alocat unei mașini
      */
     public function isAssigned()
     {
@@ -77,7 +96,7 @@ class Device extends Model
     }
 
     /**
-     * Check if device is online (last_online within 5 minutes)
+     * Verifică dacă device-ul este online (ultimele 5 minute)
      */
     public function isOnline()
     {
@@ -89,18 +108,55 @@ class Device extends Model
     }
 
     /**
-     * Get all telemetry records for this device
+     * Verifică dacă device-ul are owner
      */
-    public function telemetry()
+    public function hasOwner()
     {
-        return $this->hasMany(DeviceTelemetry::class);
+        return !is_null($this->owner_id);
     }
 
     /**
-     * Get the latest telemetry record
+     * Verifică dacă device-ul este administrat de un anumit admin
      */
-    public function latestTelemetry()
+    public function isManagedBy(User $admin)
     {
-        return $this->hasOne(DeviceTelemetry::class)->latestOfMany('recorded_at');
+        return $this->admins()->where('admin_id', $admin->id)->exists();
+    }
+
+    /**
+     * Alocă device-ul la un vehicul și moștenește owner/admin
+     */
+    public function assignToVehicle(Vehicle $vehicle, ?User $assignedBy = null)
+    {
+        // Setează vehiculul
+        $vehicle->device_id = $this->id;
+        $vehicle->save();
+
+        // Moștenește owner de la vehicul
+        if ($vehicle->owner_id) {
+            $this->owner_id = $vehicle->owner_id;
+            $this->save();
+        }
+
+        // Dacă a fost alocat de un admin, adaugă-l în lista de admini
+        if ($assignedBy && $assignedBy->hasRole('admin')) {
+            $this->admins()->syncWithoutDetaching([$assignedBy->id]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Detașează device-ul de la vehicul
+     */
+    public function detachFromVehicle()
+    {
+        if ($this->vehicle) {
+            $vehicle = $this->vehicle;
+            $vehicle->device_id = null;
+            $vehicle->save();
+        }
+
+        return $this;
     }
 }

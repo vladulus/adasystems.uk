@@ -2,307 +2,248 @@
 
 @section('title', 'Edit vehicle')
 
-@section('styles')
-<style>
-/* Header */
-.page-header {
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-    margin-bottom:1.5rem;
-}
-.page-title {
-    font-size:1.75rem;
-    font-weight:700;
-    color:#111827;
-}
-.page-subtitle {
-    font-size:0.9rem;
-    color:#6b7280;
-    margin-top:0.25rem;
-}
-.page-header-actions {
-    display:flex;
-    gap:0.75rem;
-}
-
-/* Buttons */
-.btn {
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:0.35rem;
-    border-radius:999px;
-    padding:0.5rem 1.1rem;
-    font-size:0.85rem;
-    font-weight:500;
-    border:1px solid transparent;
-    cursor:pointer;
-    text-decoration:none;
-    transition:.15s ease;
-    white-space:nowrap;
-}
-.btn i { font-size:0.9rem; }
-
-.btn-primary {
-    background:#2563eb;
-    color:#fff;
-    box-shadow:0 10px 25px rgba(37,99,235,0.35);
-}
-.btn-primary:hover {
-    background:#1d4ed8;
-    transform:translateY(-1px);
-}
-
-.btn-secondary {
-    background:#fff;
-    color:#111827;
-    border-color:#e5e7eb;
-}
-.btn-secondary:hover {
-    background:#f9fafb;
-}
-
-.btn-ghost {
-    background:transparent;
-    color:#6b7280;
-}
-.btn-ghost:hover {
-    background:#f3f4f6;
-}
-
-.btn-icon {
-    padding-inline:0.9rem;
-}
-
-/* Card + form layout */
-.card {
-    background:#fff;
-    border-radius:18px;
-    box-shadow:0 18px 55px rgba(129,140,248,0.3);
-    padding:1.25rem 1.5rem;
-}
-
-.form-card {
-    max-width:980px;
-    margin:0 auto;
-}
-
-.form-grid {
-    display:grid;
-    grid-template-columns:minmax(0,1.6fr) minmax(0,1.4fr);
-    gap:1.5rem;
-}
-
-.form-section-title {
-    font-size:0.95rem;
-    font-weight:600;
-    color:#111827;
-    margin-bottom:0.75rem;
-}
-
-/* Fields */
-.field-group {
-    margin-bottom:0.9rem;
-}
-.field-label {
-    display:block;
-    font-size:0.8rem;
-    font-weight:600;
-    color:#4b5563;
-    margin-bottom:0.2rem;
-}
-.field-grid-2 {
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:0.75rem;
-}
-
-.input,
-.select {
-    width:100%;
-    border-radius:10px;
-    border:1px solid #e5e7eb;
-    padding:0.55rem 0.75rem;
-    font-size:0.88rem;
-}
-.input:focus,
-.select:focus {
-    outline:none;
-    border-color:#6366f1;
-    box-shadow:0 0 0 1px rgba(99,102,241,0.25);
-}
-
-.input-error {
-    border-color:#f97373;
-}
-
-.field-error {
-    font-size:0.75rem;
-    color:#b91c1c;
-    margin-top:0.15rem;
-}
-
-.field-help {
-    font-size:0.75rem;
-    color:#6b7280;
-}
-
-/* Footer */
-.form-footer {
-    margin-top:1.2rem;
-    display:flex;
-    justify-content:flex-end;
-    gap:0.75rem;
-}
-
-@media (max-width:900px) {
-    .form-grid {
-        grid-template-columns:1fr;
-    }
-}
-</style>
-@endsection
-
 @section('content')
-<div class="page-header">
-    <div>
-        <h1 class="page-title">Edit vehicle</h1>
-        <p class="page-subtitle">
-            {{ $vehicle->registration_number ?? 'Vehicle' }}
-            @if($vehicle->make || $vehicle->model)
-                — {{ trim(($vehicle->make ?? '').' '.($vehicle->model ?? '')) }}
-            @endif
-        </p>
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<div class="page-wrapper">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Edit vehicle</h1>
+            <p class="page-subtitle">
+                {{ $vehicle->registration_number ?? 'Vehicle' }}
+                @if($vehicle->make || $vehicle->model)
+                    — {{ $vehicle->make }} {{ $vehicle->model }}
+                @endif
+            </p>
+        </div>
+        <div class="page-header-actions">
+            <a href="{{ route('management.vehicles.index') }}" class="btn btn-light">← Back to vehicles</a>
+        </div>
     </div>
 
-    <div class="page-header-actions">
-        <a href="{{ route('management.vehicles.index') }}" class="btn btn-secondary btn-icon">
-            <i class="fas fa-arrow-left"></i>
-            <span>Back to vehicles</span>
-        </a>
-        <a href="{{ route('management.index') }}" class="btn btn-ghost btn-icon">
-            <i class="fas fa-th-large"></i>
-            <span>Dashboard</span>
-        </a>
-    </div>
-</div>
+    @if (session('error'))
+        <div class="alert alert-error">{{ session('error') }}</div>
+    @endif
 
-<div class="card form-card">
-    <form action="{{ route('management.vehicles.update', $vehicle) }}" method="POST">
-        @csrf
-        @method('PUT')
+    @if (session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
 
-        <div class="form-grid">
-            {{-- Vehicle details --}}
-            <div>
-                <h2 class="form-section-title">Vehicle details</h2>
+    @if ($errors->any())
+        <div class="alert alert-error">
+            <strong>There were some problems:</strong>
+            <ul style="margin:6px 0 0;padding-left:18px;">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
-                <div class="field-group">
-                    <label class="field-label">Registration number (plate)</label>
-                    <input type="text"
-                           name="registration_number"
-                           class="input @error('registration_number') input-error @enderror"
-                           value="{{ old('registration_number', $vehicle->registration_number) }}">
-                    @error('registration_number')
-                        <p class="field-error">{{ $message }}</p>
-                    @enderror
-                </div>
+    <div class="card">
+        <form action="{{ route('management.vehicles.update', $vehicle) }}" method="POST">
+            @csrf
+            @method('PUT')
 
-                <div class="field-grid-2">
-                    <div class="field-group">
-                        <label class="field-label">Make</label>
-                        <input type="text"
-                               name="make"
-                               class="input @error('make') input-error @enderror"
-                               value="{{ old('make', $vehicle->make) }}">
-                        @error('make')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
+            <div class="form-grid">
+                {{-- Left Column: Vehicle details --}}
+                <div class="form-column">
+                    <h2 class="card-title">Vehicle details</h2>
+
+                    <div class="form-group">
+                        <label class="form-label">Registration number (plate)</label>
+                        <input type="text" name="registration_number" class="input" value="{{ old('registration_number', $vehicle->registration_number) }}" required>
                     </div>
 
-                    <div class="field-group">
-                        <label class="field-label">Model</label>
-                        <input type="text"
-                               name="model"
-                               class="input @error('model') input-error @enderror"
-                               value="{{ old('model', $vehicle->model) }}">
-                        @error('model')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Make</label>
+                            <input type="text" name="make" class="input" value="{{ old('make', $vehicle->make) }}" placeholder="Volvo, Scania, Mercedes...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Model</label>
+                            <input type="text" name="model" class="input" value="{{ old('model', $vehicle->model) }}" placeholder="FH16, R500, Actros...">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Year</label>
+                            <input type="number" name="year" class="input" value="{{ old('year', $vehicle->year) }}" min="1990" max="{{ date('Y') + 1 }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">VIN</label>
+                            <input type="text" name="vin" class="input" value="{{ old('vin', $vehicle->vin) }}" maxlength="17">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="input">
+                            <option value="active" @selected(old('status', $vehicle->status) === 'active')>Active</option>
+                            <option value="inactive" @selected(old('status', $vehicle->status) === 'inactive')>Inactive</option>
+                            <option value="service" @selected(old('status', $vehicle->status) === 'service')>In service</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="field-grid-2">
-                    <div class="field-group">
-                        <label class="field-label">Year</label>
-                        <input type="number"
-                               name="year"
-                               class="input @error('year') input-error @enderror"
-                               value="{{ old('year', $vehicle->year) }}">
-                        @error('year')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
+                {{-- Right Column: Assignment --}}
+                <div class="form-column">
+                    <h2 class="card-title">Assignment</h2>
+
+                    @php
+                        $currentUser = auth()->user();
+                        $isSuperAdmin = $currentUser->isEffectiveSuperAdmin();
+                        $isAdmin = $currentUser->hasRole('admin');
+                        $isSuperuser = $currentUser->isSuperuser();
+                    @endphp
+
+                    {{-- Owner (Superuser) - doar pentru super-admin și admin --}}
+                    @if($isSuperAdmin || $isAdmin)
+                    <div class="form-group">
+                        <label class="form-label">Owner (Client)</label>
+                        <select name="owner_id" id="owner_id" class="select2-single" data-placeholder="Select owner...">
+                            <option value="">-- No owner --</option>
+                            @foreach($allSuperusers ?? [] as $superuser)
+                                <option value="{{ $superuser->id }}" @selected(old('owner_id', $vehicle->owner_id) == $superuser->id)>
+                                    {{ $superuser->name }} ({{ $superuser->email }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="field-hint">Client who owns this vehicle</p>
                     </div>
+                    @endif
 
-                    <div class="field-group">
-                        <label class="field-label">VIN</label>
-                        <input type="text"
-                               name="vin"
-                               class="input @error('vin') input-error @enderror"
-                               value="{{ old('vin', $vehicle->vin) }}">
-                        @error('vin')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-            </div>
-
-            {{-- Status & assignment --}}
-            <div>
-                <h2 class="form-section-title">Status & assignment</h2>
-
-                <div class="field-group">
-                    <label class="field-label">Status</label>
-                    <select name="status" class="select @error('status') input-error @enderror">
-                        @php $currentStatus = old('status', $vehicle->status); @endphp
-                        <option value="active"   {{ $currentStatus === 'active'   ? 'selected' : '' }}>Active</option>
-                        <option value="inactive" {{ $currentStatus === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                        <option value="service"  {{ $currentStatus === 'service'  ? 'selected' : '' }}>In service</option>
-                    </select>
-                    @error('status')
-                        <p class="field-error">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="field-group">
-                    <label class="field-label">Assigned device</label>
-                    <select name="device_id" class="select @error('device_id') input-error @enderror">
-                        <option value="">No device</option>
-                        @foreach($devices as $device)
-                            <option value="{{ $device->id }}"
-                                {{ (string) old('device_id', $vehicle->device_id) === (string) $device->id ? 'selected' : '' }}>
-                                {{ $device->device_name ?? 'Device' }}
-                                @if($device->serial_number)
-                                    — {{ $device->serial_number }}
+                    {{-- Device - doar pentru super-admin și admin --}}
+                    @if($isSuperAdmin || $isAdmin)
+                    <div class="form-group">
+                        <label class="form-label">Tracking Device</label>
+                        <select name="device_id" id="device_id" class="select2-single" data-placeholder="Select device...">
+                            <option value="">-- No device --</option>
+                            @foreach($devices ?? [] as $device)
+                                @php
+                                    // Verifică dacă device-ul poate fi alocat acestui vehicul
+                                    // (fie e liber, fie e deja pe acest vehicul, fie e al aceluiași owner)
+                                    $canAssign = !$device->vehicle || $device->vehicle->id === $vehicle->id;
+                                    if ($vehicle->owner_id && $device->owner_id && $device->owner_id !== $vehicle->owner_id) {
+                                        $canAssign = false;
+                                    }
+                                @endphp
+                                @if($canAssign || old('device_id', $vehicle->device_id) == $device->id)
+                                <option value="{{ $device->id }}" @selected(old('device_id', $vehicle->device_id) == $device->id)>
+                                    {{ $device->device_name }}
+                                    @if($device->owner) ({{ $device->owner->name }})@endif
+                                    @if($device->vehicle && $device->vehicle->id !== $vehicle->id) [on {{ $device->vehicle->registration_number }}]@endif
+                                </option>
                                 @endif
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('device_id')
-                        <p class="field-error">{{ $message }}</p>
-                    @enderror
-                    <small class="field-help">
-                        Only free devices or the device already assigned to this vehicle are available.
-                    </small>
+                            @endforeach
+                        </select>
+                        <p class="field-hint">Device must belong to the same owner as the vehicle</p>
+                    </div>
+                    @else
+                    {{-- Superuser vede device-ul dar nu-l poate schimba --}}
+                    @if($vehicle->device)
+                    <div class="form-group">
+                        <label class="form-label">Tracking Device</label>
+                        <input type="text" class="input" value="{{ $vehicle->device->device_name }}" disabled readonly>
+                        <p class="field-hint">Contact admin to change device assignment</p>
+                    </div>
+                    @endif
+                    @endif
+
+                    {{-- Assigned Drivers --}}
+                    <div class="form-group">
+                        <label class="form-label">Assigned Drivers</label>
+                        <select name="driver_ids[]" id="driver_ids" class="select2-chips" multiple="multiple" data-placeholder="Search and select drivers...">
+                            @foreach($drivers ?? [] as $driver)
+                                <option value="{{ $driver->id }}" @if(in_array($driver->id, $vehicle->drivers->pluck('id')->toArray())) selected @endif>
+                                    {{ $driver->name }}
+                                    @if($driver->license_number) - {{ $driver->license_number }}@endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="field-hint">Drivers who can operate this vehicle</p>
+                    </div>
+
                 </div>
             </div>
-        </div>
 
-        <div class="form-footer">
-            <a href="{{ route('management.vehicles.index') }}" class="btn btn-ghost">Cancel</a>
-            <button type="submit" class="btn btn-primary">Save changes</button>
-        </div>
-    </form>
+            <div class="form-footer">
+                <a href="{{ route('management.vehicles.index') }}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save changes</button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<style>
+    .page-wrapper { max-width: 1200px; margin: 0 auto; padding: 24px 16px 40px; }
+    .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .page-title { font-size: 24px; font-weight: 600; margin: 0; }
+    .page-subtitle { margin: 4px 0 0; font-size: 14px; color: #6b7280; }
+    .page-header-actions { display: flex; gap: 12px; }
+
+    .input { border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 10px; font-size: 14px; width: 100%; background: #fff; }
+    .input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 1px rgba(37,99,235,0.1); }
+    .input:disabled { background: #f3f4f6; color: #6b7280; }
+
+    .btn { border-radius: 8px; padding: 8px 14px; font-size: 14px; font-weight: 500; border: 1px solid transparent; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; transition: all 0.15s; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; box-shadow: 0 10px 15px -3px rgba(37,99,235,0.25); }
+    .btn-light { background: #f3f4f6; color: #111827; border-color: #e5e7eb; }
+    .btn-light:hover { background: #e5e7eb; }
+    .btn-ghost { background: transparent; color: #4b5563; }
+    .btn-ghost:hover { background: #f3f4f6; }
+
+    .card { background: #fff; border-radius: 18px; border: 1px solid rgba(148,163,184,0.35); box-shadow: 0 18px 45px rgba(124,58,237,0.28); padding: 18px; overflow: visible; }
+    .card-title { font-size: 16px; font-weight: 600; margin: 0 0 14px; }
+
+    .alert { padding: 10px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 14px; }
+    .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+    .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+
+    .form-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; }
+    .form-column { display: flex; flex-direction: column; gap: 12px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label { font-size: 13px; font-weight: 500; color: #374151; }
+    .field-hint { font-size: 12px; color: #6b7280; margin: 0; }
+    .form-footer { grid-column: 1 / -1; margin-top: 14px; padding-top: 14px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* Select2 Single */
+    .select2-container--default .select2-selection--single { border: 1px solid #d1d5db; border-radius: 8px; height: 38px; padding: 4px 8px; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 28px; color: #374151; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+    .select2-container--default.select2-container--focus .select2-selection--single { border-color: #2563eb; box-shadow: 0 0 0 1px rgba(37,99,235,0.1); }
+
+    /* Select2 Chips */
+    .select2-container--default .select2-selection--multiple { border: 1px solid #d1d5db; border-radius: 8px; padding: 4px 6px; min-height: 38px; background: #fff; }
+    .select2-container--default.select2-container--focus .select2-selection--multiple { border-color: #2563eb; box-shadow: 0 0 0 1px rgba(37,99,235,0.1); }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice { background: #7c3aed; color: #fff; border: none; border-radius: 6px; padding: 4px 8px; margin: 2px; font-size: 13px; }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove { color: #fff; margin-right: 5px; }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover { color: #fecaca; background: transparent; }
+    .select2-dropdown { border-radius: 8px; border: 1px solid #d1d5db; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] { background: #7c3aed; }
+    .select2-container--default .select2-search--inline .select2-search__field { margin-top: 4px; font-size: 14px; }
+
+    @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('.select2-chips').select2({
+        width: '100%',
+        allowClear: true,
+        closeOnSelect: false
+    });
+    
+    $('.select2-single').select2({
+        width: '100%',
+        allowClear: true
+    });
+});
+</script>
 @endsection

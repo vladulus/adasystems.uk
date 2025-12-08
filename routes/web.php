@@ -99,10 +99,16 @@ Route::middleware('auth')->group(function () {
         '/ada-pi/devices/{device}/interval',
         [AdaPiWebDeviceController::class, 'updateInterval']
     )->name('ada-pi.devices.interval');
-	
-	Route::middleware('auth:api')->prefix('ada-pi')->group(function () {
-    Route::post('/device/status', [AdaPiDeviceStatusController::class, 'status']);
-    });
+
+    Route::post(
+        '/ada-pi/devices/{device}/dtc/read',
+        [AdaPiWebDeviceController::class, 'readDTC']
+    )->name('ada-pi.devices.dtc.read');
+
+    Route::post(
+        '/ada-pi/devices/{device}/dtc/clear',
+        [AdaPiWebDeviceController::class, 'clearDTC']
+    )->name('ada-pi.devices.dtc.clear');
 
     // HUB – pagina cu 2 carduri (Management + Pi)
     Route::get('/hub', function () {

@@ -104,13 +104,8 @@ class DriverController extends Controller
 
         $validated = $request->validate([
             'name'               => ['required', 'string', 'max:255'],
-            'email'              => ['nullable', 'email', 'max:255'],
-            'phone'              => [
-                'required',
-                'string',
-                'max:20',
-                'regex:/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/',
-            ],
+            'email'              => ['required', 'email', 'max:255', 'unique:users,email'],
+            'phone'              => ['nullable', 'string', 'max:20'],
             'date_of_birth'      => ['nullable', 'date'],
             'address'            => ['nullable', 'string', 'max:500'],
             'license_number'     => [
@@ -118,11 +113,10 @@ class DriverController extends Controller
                 'string',
                 'max:50',
                 'unique:drivers,license_number',
-                'regex:/^[A-Z0-9\-]+$/i',
             ],
             'license_type'       => ['required', 'string', 'max:255'],
             'license_issue_date' => ['nullable', 'date', 'before_or_equal:today'],
-            'license_expiry_date'=> ['required', 'date', 'after_or_equal:license_issue_date'],
+            'license_expiry_date'=> ['nullable', 'date'],
             'status'             => ['required', 'in:active,inactive,on_leave'],
             'hire_date'          => ['nullable', 'date', 'before_or_equal:today'],
             'emergency_contact'  => ['nullable', 'string', 'max:255'],
@@ -134,14 +128,62 @@ class DriverController extends Controller
         // Normalize license number
         $validated['license_number'] = strtoupper($validated['license_number']);
 
-        $driver = Driver::create($validated);
+        \DB::beginTransaction();
+        try {
+            $userId = null;
+            $successMessage = 'Driver created successfully.';
 
-        // Attach vehicles (many-to-many)
-        $driver->vehicles()->sync($validated['vehicle_ids'] ?? []);
+            // Creează User doar dacă are email
+            if (!empty($validated['email'])) {
+                $user = \App\Models\User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => \Hash::make($validated['license_number']),
+                    'phone' => $validated['phone'] ?? null,
+                    'status' => $validated['status'] === 'active' ? 'active' : 'inactive',
+                    'email_verified_at' => now(),
+                    'created_by' => auth()->id(),
+                ]);
+                $user->assignRole('user');
+                $userId = $user->id;
+                $successMessage = 'Driver created with login account. Password: ' . $validated['license_number'];
+            }
 
-        return redirect()
-            ->route('management.drivers.index')
-            ->with('success', 'Driver created successfully.');
+            // Creează Driver
+            $driver = Driver::create([
+                'user_id' => $userId,
+                'name' => $validated['name'],
+                'email' => $validated['email'] ?? null,
+                'phone' => $validated['phone'] ?? null,
+                'date_of_birth' => $validated['date_of_birth'] ?? null,
+                'address' => $validated['address'] ?? null,
+                'license_number' => $validated['license_number'],
+                'license_type' => $validated['license_type'],
+                'license_issue_date' => $validated['license_issue_date'] ?? null,
+                'license_expiry_date' => $validated['license_expiry_date'] ?? null,
+                'status' => $validated['status'],
+                'hire_date' => $validated['hire_date'] ?? null,
+                'emergency_contact' => $validated['emergency_contact'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            // 3. Attach vehicles (many-to-many)
+            $driver->vehicles()->sync($validated['vehicle_ids'] ?? []);
+
+            \DB::commit();
+
+            return redirect()
+                ->route('management.drivers.index')
+                ->with('success', 'Driver created successfully. Login: ' . $validated['email'] . ' / Password: ' . $validated['license_number']);
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Driver creation failed: ' . $e->getMessage());
+            
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create driver: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -159,10 +201,39 @@ class DriverController extends Controller
     {
         $this->authorize('update', $driver);
 
-        $driver->load('vehicles');
-        $vehicles = Vehicle::orderBy('registration_number')->get();
+        $driver->load(['vehicles', 'employers']);
+        
+        $currentUser = auth()->user();
+        $isSuperAdmin = $currentUser->isEffectiveSuperAdmin();
+        $isAdmin = $currentUser->hasRole('admin');
+        $isSuperuser = $currentUser->isSuperuser();
+        
+        // Vehicles: filtrate în funcție de rol
+        if ($isSuperAdmin) {
+            $vehicles = Vehicle::with('owner')->orderBy('registration_number')->get();
+        } elseif ($isAdmin) {
+            // Admin: vehiculele superuserilor pe care îi administrează
+            $superuserIds = $currentUser->managedSuperusers->pluck('id');
+            $vehicles = Vehicle::with('owner')
+                ->whereIn('owner_id', $superuserIds)
+                ->orderBy('registration_number')
+                ->get();
+        } else {
+            // Superuser: doar vehiculele proprii
+            $vehicles = Vehicle::where('owner_id', $currentUser->id)
+                ->orderBy('registration_number')
+                ->get();
+        }
+        
+        // Employers (superusers): doar pentru super-admin și admin
+        $allSuperusers = [];
+        if ($isSuperAdmin) {
+            $allSuperusers = \App\Models\User::role('superuser')->orderBy('name')->get();
+        } elseif ($isAdmin) {
+            $allSuperusers = $currentUser->managedSuperusers;
+        }
 
-        return view('management.drivers.edit', compact('driver', 'vehicles'));
+        return view('management.drivers.edit', compact('driver', 'vehicles', 'allSuperusers'));
     }
 
     /**
@@ -175,12 +246,7 @@ class DriverController extends Controller
         $validated = $request->validate([
             'name'               => ['required', 'string', 'max:255'],
             'email'              => ['nullable', 'email', 'max:255'],
-            'phone'              => [
-                'required',
-                'string',
-                'max:20',
-                'regex:/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/',
-            ],
+            'phone'              => ['nullable', 'string', 'max:20'],
             'date_of_birth'      => ['nullable', 'date'],
             'address'            => ['nullable', 'string', 'max:500'],
             'license_number'     => [
@@ -188,17 +254,18 @@ class DriverController extends Controller
                 'string',
                 'max:50',
                 'unique:drivers,license_number,' . $driver->id,
-                'regex:/^[A-Z0-9\-]+$/i',
             ],
             'license_type'       => ['required', 'string', 'max:255'],
             'license_issue_date' => ['nullable', 'date', 'before_or_equal:today'],
-            'license_expiry_date'=> ['required', 'date', 'after_or_equal:license_issue_date'],
+            'license_expiry_date'=> ['nullable', 'date'],
             'status'             => ['required', 'in:active,inactive,on_leave'],
             'hire_date'          => ['nullable', 'date', 'before_or_equal:today'],
             'emergency_contact'  => ['nullable', 'string', 'max:255'],
             'notes'              => ['nullable', 'string', 'max:2000'],
             'vehicle_ids'        => ['nullable', 'array'],
             'vehicle_ids.*'      => ['integer', 'exists:vehicles,id'],
+            'employer_ids'       => ['nullable', 'array'],
+            'employer_ids.*'     => ['integer', 'exists:users,id'],
         ]);
 
         $validated['license_number'] = strtoupper($validated['license_number']);
@@ -207,6 +274,14 @@ class DriverController extends Controller
 
         // Sync vehicles
         $driver->vehicles()->sync($validated['vehicle_ids'] ?? []);
+        
+        // Sync employers (doar pentru super-admin și admin)
+        $currentUser = auth()->user();
+        if ($currentUser->isEffectiveSuperAdmin() || $currentUser->hasRole('admin')) {
+            if ($request->has('employer_ids')) {
+                $driver->employers()->sync($validated['employer_ids'] ?? []);
+            }
+        }
 
         return redirect()
             ->route('management.drivers.index')

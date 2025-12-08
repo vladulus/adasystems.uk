@@ -60,6 +60,11 @@ class AdaPiWebDeviceController extends Controller
         return response()->json([
             'online' => $device->isOnline(),
             'last_online' => $device->last_online?->diffForHumans(),
+            'dtc' => [
+                'codes' => $device->dtc_codes ?? [],
+                'updated_at' => $device->dtc_updated_at?->diffForHumans(),
+                'pending_command' => $device->pending_command,
+            ],
             'telemetry' => $latestTelemetry ? [
                 'recorded_at' => $latestTelemetry->recorded_at->format('H:i:s'),
                 'gps' => [
@@ -171,6 +176,37 @@ class AdaPiWebDeviceController extends Controller
              sin($dLon/2) * sin($dLon/2);
         $c = 2 * atan2(sqrt($a), sqrt(1-$a));
         return $r * $c;
+    }
+
+    /**
+     * Request DTC read from device
+     */
+    public function readDTC(Device $device)
+    {
+        $device->pending_command = 'read_dtc';
+        $device->save();
+
+        // Return current codes if available
+        return response()->json([
+            'success' => true,
+            'message' => 'Command queued. Codes will update on next device sync.',
+            'codes' => $device->dtc_codes ?? [],
+            'updated_at' => $device->dtc_updated_at?->diffForHumans(),
+        ]);
+    }
+
+    /**
+     * Request DTC clear from device
+     */
+    public function clearDTC(Device $device)
+    {
+        $device->pending_command = 'clear_dtc';
+        $device->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Clear command queued. Will execute on next device sync.',
+        ]);
     }
 
     /**

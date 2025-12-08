@@ -85,48 +85,127 @@
 
     {{-- Main Grid --}}
     <div class="dash-grid">
-        {{-- Map --}}
-        <div class="card card-map">
-            <div class="card-header">
-                <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
-                <div class="gps-coords" id="gpsCoords">
-                    @if($latestTelemetry && $latestTelemetry->hasGps())
-                        {{ number_format($latestTelemetry->latitude, 5) }}, {{ number_format($latestTelemetry->longitude, 5) }}
-                    @else
-                        No GPS data
-                    @endif
+        {{-- Column 1: Map + UPS --}}
+        <div class="col-left">
+            {{-- Map --}}
+            <div class="card card-map">
+                <div class="card-header">
+                    <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
+                    <div class="gps-coords" id="gpsCoords">
+                        @if($latestTelemetry && $latestTelemetry->hasGps())
+                            {{ number_format($latestTelemetry->latitude, 5) }}, {{ number_format($latestTelemetry->longitude, 5) }}
+                        @else
+                            No GPS data
+                        @endif
+                    </div>
+                </div>
+                <div id="map" class="map-container"></div>
+            </div>
+
+            {{-- UPS Panel --}}
+            <div class="card card-panel">
+                <div class="card-header">
+                    <h3><i class="fas fa-battery-three-quarters"></i> UPS</h3>
+                </div>
+                <div class="panel-grid">
+                    <div class="panel-item">
+                        <span class="panel-label">Battery</span>
+                        <span class="panel-value" id="upsBattery">{{ $latestTelemetry->battery_percent ?? '--' }}%</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Voltage</span>
+                        <span class="panel-value" id="upsVoltage">{{ $latestTelemetry->battery_voltage ?? '--' }}V</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Charging</span>
+                        <span class="panel-value" id="upsCharging">
+                            @if($latestTelemetry && $latestTelemetry->is_charging !== null)
+                                {{ $latestTelemetry->is_charging ? 'Yes' : 'No' }}
+                            @else
+                                --
+                            @endif
+                        </span>
+                    </div>
                 </div>
             </div>
-            <div id="map" class="map-container"></div>
         </div>
 
-        {{-- GPS Panel --}}
-        <div class="card card-panel">
-            <div class="card-header">
-                <h3><i class="fas fa-satellite"></i> GPS</h3>
+        {{-- Column 2: GPS + Modem + System --}}
+        <div class="col-middle">
+            {{-- GPS Panel --}}
+            <div class="card card-panel">
+                <div class="card-header">
+                    <h3><i class="fas fa-satellite"></i> GPS</h3>
+                </div>
+                <div class="panel-grid">
+                    <div class="panel-item">
+                        <span class="panel-label">Speed</span>
+                        <span class="panel-value" id="gpsSpeed">{{ $latestTelemetry->speed ?? '--' }} km/h</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Heading</span>
+                        <span class="panel-value" id="gpsHeading">{{ $latestTelemetry->heading ?? '--' }}°</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Altitude</span>
+                        <span class="panel-value" id="gpsAltitude">{{ $latestTelemetry->altitude ?? '--' }} m</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Satellites</span>
+                        <span class="panel-value" id="gpsSatellites">{{ $latestTelemetry->satellites ?? '--' }}</span>
+                    </div>
+                </div>
             </div>
-            <div class="panel-grid">
-                <div class="panel-item">
-                    <span class="panel-label">Speed</span>
-                    <span class="panel-value" id="gpsSpeed">{{ $latestTelemetry->speed ?? '--' }} km/h</span>
+
+            {{-- Modem Panel --}}
+            <div class="card card-panel">
+                <div class="card-header">
+                    <h3><i class="fas fa-signal"></i> Modem</h3>
                 </div>
-                <div class="panel-item">
-                    <span class="panel-label">Heading</span>
-                    <span class="panel-value" id="gpsHeading">{{ $latestTelemetry->heading ?? '--' }}°</span>
+                <div class="panel-grid">
+                    <div class="panel-item">
+                        <span class="panel-label">Signal</span>
+                        <span class="panel-value" id="modemSignal">{{ $latestTelemetry->signal_strength ?? '--' }} dBm</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Network</span>
+                        <span class="panel-value" id="modemNetwork">{{ $latestTelemetry->network_type ?? '--' }}</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Operator</span>
+                        <span class="panel-value" id="modemOperator">{{ $latestTelemetry->operator ?? '--' }}</span>
+                    </div>
                 </div>
-                <div class="panel-item">
-                    <span class="panel-label">Altitude</span>
-                    <span class="panel-value" id="gpsAltitude">{{ $latestTelemetry->altitude ?? '--' }} m</span>
+            </div>
+
+            {{-- System Panel --}}
+            <div class="card card-panel card-system">
+                <div class="card-header">
+                    <h3><i class="fas fa-microchip"></i> System</h3>
                 </div>
-                <div class="panel-item">
-                    <span class="panel-label">Satellites</span>
-                    <span class="panel-value" id="gpsSatellites">{{ $latestTelemetry->satellites ?? '--' }}</span>
+                <div class="panel-grid">
+                    <div class="panel-item">
+                        <span class="panel-label">CPU Temp</span>
+                        <span class="panel-value" id="sysCpuTemp">{{ $latestTelemetry->cpu_temp ?? '--' }}°C</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">CPU Usage</span>
+                        <span class="panel-value" id="sysCpu">{{ $latestTelemetry->cpu_usage ?? '--' }}%</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Memory</span>
+                        <span class="panel-value" id="sysMemory">{{ $latestTelemetry->memory_usage ?? '--' }}%</span>
+                    </div>
+                    <div class="panel-item">
+                        <span class="panel-label">Disk</span>
+                        <span class="panel-value" id="sysDisk">{{ $latestTelemetry->disk_usage ?? '--' }}%</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- OBD Panel --}}
-        <div class="card card-panel">
+        {{-- Column 3: OBD-II --}}
+        <div class="card card-panel card-obd">
             <div class="card-header">
                 <h3><i class="fas fa-car"></i> OBD-II</h3>
             </div>
@@ -156,77 +235,23 @@
                     <span class="panel-value" id="obdLoad">{{ $latestTelemetry->engine_load ?? '--' }}%</span>
                 </div>
             </div>
-        </div>
-
-        {{-- Modem Panel --}}
-        <div class="card card-panel">
-            <div class="card-header">
-                <h3><i class="fas fa-signal"></i> Modem</h3>
-            </div>
-            <div class="panel-grid">
-                <div class="panel-item">
-                    <span class="panel-label">Signal</span>
-                    <span class="panel-value" id="modemSignal">{{ $latestTelemetry->signal_strength ?? '--' }} dBm</span>
+            
+            {{-- DTC Section --}}
+            <div class="dtc-section">
+                <div class="dtc-header">
+                    <span class="dtc-title"><i class="fas fa-exclamation-triangle"></i> Fault Codes</span>
+                    <span class="dtc-count" id="dtcCount">0 codes</span>
                 </div>
-                <div class="panel-item">
-                    <span class="panel-label">Network</span>
-                    <span class="panel-value" id="modemNetwork">{{ $latestTelemetry->network_type ?? '--' }}</span>
+                <div class="dtc-list" id="dtcList">
+                    <div class="dtc-empty">No fault codes detected</div>
                 </div>
-                <div class="panel-item">
-                    <span class="panel-label">Operator</span>
-                    <span class="panel-value" id="modemOperator">{{ $latestTelemetry->operator ?? '--' }}</span>
-                </div>
-            </div>
-        </div>
-
-        {{-- System Panel --}}
-        <div class="card card-panel">
-            <div class="card-header">
-                <h3><i class="fas fa-microchip"></i> System</h3>
-            </div>
-            <div class="panel-grid">
-                <div class="panel-item">
-                    <span class="panel-label">CPU Temp</span>
-                    <span class="panel-value" id="sysCpuTemp">{{ $latestTelemetry->cpu_temp ?? '--' }}°C</span>
-                </div>
-                <div class="panel-item">
-                    <span class="panel-label">CPU Usage</span>
-                    <span class="panel-value" id="sysCpu">{{ $latestTelemetry->cpu_usage ?? '--' }}%</span>
-                </div>
-                <div class="panel-item">
-                    <span class="panel-label">Memory</span>
-                    <span class="panel-value" id="sysMemory">{{ $latestTelemetry->memory_usage ?? '--' }}%</span>
-                </div>
-                <div class="panel-item">
-                    <span class="panel-label">Disk</span>
-                    <span class="panel-value" id="sysDisk">{{ $latestTelemetry->disk_usage ?? '--' }}%</span>
-                </div>
-            </div>
-        </div>
-
-        {{-- UPS Panel --}}
-        <div class="card card-panel">
-            <div class="card-header">
-                <h3><i class="fas fa-battery-three-quarters"></i> UPS</h3>
-            </div>
-            <div class="panel-grid">
-                <div class="panel-item">
-                    <span class="panel-label">Battery</span>
-                    <span class="panel-value" id="upsBattery">{{ $latestTelemetry->battery_percent ?? '--' }}%</span>
-                </div>
-                <div class="panel-item">
-                    <span class="panel-label">Voltage</span>
-                    <span class="panel-value" id="upsVoltage">{{ $latestTelemetry->battery_voltage ?? '--' }}V</span>
-                </div>
-                <div class="panel-item">
-                    <span class="panel-label">Charging</span>
-                    <span class="panel-value" id="upsCharging">
-                        @if($latestTelemetry && $latestTelemetry->is_charging !== null)
-                            {{ $latestTelemetry->is_charging ? 'Yes' : 'No' }}
-                        @else
-                            --
-                        @endif
-                    </span>
+                <div class="dtc-actions">
+                    <button type="button" class="btn btn-obd btn-read" id="btnReadDTC">
+                        <i class="fas fa-search"></i> Read DTC
+                    </button>
+                    <button type="button" class="btn btn-obd btn-clear" id="btnClearDTC">
+                        <i class="fas fa-eraser"></i> Clear DTC
+                    </button>
                 </div>
             </div>
         </div>
@@ -486,6 +511,37 @@
         display: grid;
         grid-template-columns: 2fr 1fr 1fr;
         gap: 16px;
+        align-items: stretch;
+    }
+
+    .col-left, .col-middle {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .col-left .card-map {
+        flex: 1;
+    }
+
+    .col-middle .card-system {
+        flex: 1;
+    }
+
+    .card-obd {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-obd .dtc-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-obd .dtc-list {
+        flex: 1;
+        min-height: 80px;
     }
 
     .card {
@@ -524,13 +580,147 @@
         font-family: monospace;
     }
 
-    .card-map {
-        grid-row: span 2;
+    .map-container {
+        height: 100%;
+        min-height: 350px;
+        background: #f3f4f6;
     }
 
-    .map-container {
-        height: 400px;
+    /* DTC Section Styles */
+    .dtc-section {
+        border-top: 1px solid #f3f4f6;
+        padding: 14px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dtc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        flex-shrink: 0;
+    }
+
+    .dtc-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .dtc-title i {
+        color: #f59e0b;
+    }
+
+    .dtc-count {
+        font-size: 11px;
+        color: #6b7280;
         background: #f3f4f6;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+
+    .dtc-list {
+        background: #fef2f2;
+        border: 2px solid #dc2626;
+        border-radius: 8px;
+        flex: 1;
+        min-height: 100px;
+        overflow-y: auto;
+    }
+
+    .dtc-empty {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+        font-size: 12px;
+    }
+
+    .dtc-item {
+        padding: 8px 12px;
+        border-bottom: 1px solid #fecaca;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .dtc-item:last-child {
+        border-bottom: none;
+    }
+
+    .dtc-code {
+        font-weight: 600;
+        color: #dc2626;
+        font-family: monospace;
+    }
+
+    .dtc-desc {
+        color: #4b5563;
+        flex: 1;
+        margin-left: 12px;
+    }
+
+    .dtc-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        flex-shrink: 0;
+    }
+
+    .btn-obd {
+        flex: 1;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.15s ease;
+    }
+
+    .btn-read {
+        background: #eef2ff;
+        color: #4f46e5;
+        border: 1px solid #c7d2fe;
+    }
+
+    .btn-read:hover {
+        background: #e0e7ff;
+    }
+
+    .btn-clear {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+
+    .btn-clear:hover {
+        background: #fee2e2;
+    }
+
+    .btn-obd:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-obd.loading i {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
 
     .card-panel {
@@ -621,9 +811,14 @@
         .dash-grid {
             grid-template-columns: 1fr 1fr;
         }
-        .card-map {
+        .col-left {
             grid-column: span 2;
-            grid-row: span 1;
+        }
+        .col-middle {
+            grid-column: span 1;
+        }
+        .card-obd {
+            grid-column: span 1;
         }
         .stats-row {
             grid-template-columns: repeat(2, 1fr);
@@ -634,7 +829,7 @@
         .dash-grid {
             grid-template-columns: 1fr;
         }
-        .card-map {
+        .col-left, .col-middle, .card-obd {
             grid-column: span 1;
         }
         .stats-row {
@@ -726,6 +921,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('sysCpu').textContent = (t.system.cpu ?? '--') + '%';
                     document.getElementById('sysMemory').textContent = (t.system.memory ?? '--') + '%';
                 }
+
+                // Update DTC display from live data
+                if (data.dtc && data.dtc.codes) {
+                    updateDTCDisplay(data.dtc.codes);
+                }
             })
             .catch(err => console.error('Update failed:', err));
     }
@@ -784,6 +984,94 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(err => console.error('Failed to save interval:', err));
     }
+
+    // ============================================
+    // DTC (Fault Codes) Functions
+    // ============================================
+    const btnReadDTC = document.getElementById('btnReadDTC');
+    const btnClearDTC = document.getElementById('btnClearDTC');
+    const dtcList = document.getElementById('dtcList');
+    const dtcCount = document.getElementById('dtcCount');
+
+    function updateDTCDisplay(codes) {
+        if (!codes || codes.length === 0) {
+            dtcList.innerHTML = '<div class="dtc-empty">No fault codes detected</div>';
+            dtcCount.textContent = '0 codes';
+            return;
+        }
+
+        dtcCount.textContent = codes.length + ' code' + (codes.length > 1 ? 's' : '');
+        dtcList.innerHTML = codes.map(code => `
+            <div class="dtc-item">
+                <span class="dtc-code">${code.code}</span>
+                <span class="dtc-desc">${code.description || 'Unknown fault'}</span>
+            </div>
+        `).join('');
+    }
+
+    function setButtonLoading(btn, loading) {
+        if (loading) {
+            btn.disabled = true;
+            btn.classList.add('loading');
+            btn.querySelector('i').className = 'fas fa-spinner';
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('loading');
+            btn.querySelector('i').className = btn === btnReadDTC ? 'fas fa-search' : 'fas fa-eraser';
+        }
+    }
+
+    btnReadDTC.addEventListener('click', function() {
+        setButtonLoading(btnReadDTC, true);
+        
+        fetch(`/ada-pi/devices/${deviceId}/dtc/read`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                updateDTCDisplay(data.codes);
+            } else {
+                dtcList.innerHTML = '<div class="dtc-empty" style="color:#dc2626;">Error reading codes: ' + (data.error || 'Unknown') + '</div>';
+            }
+        })
+        .catch(err => {
+            dtcList.innerHTML = '<div class="dtc-empty" style="color:#dc2626;">Failed to read codes</div>';
+            console.error('DTC read error:', err);
+        })
+        .finally(() => setButtonLoading(btnReadDTC, false));
+    });
+
+    btnClearDTC.addEventListener('click', function() {
+        if (!confirm('Are you sure you want to clear all fault codes?')) return;
+        
+        setButtonLoading(btnClearDTC, true);
+        
+        fetch(`/ada-pi/devices/${deviceId}/dtc/clear`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                updateDTCDisplay([]);
+            } else {
+                alert('Failed to clear codes: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            alert('Failed to clear codes');
+            console.error('DTC clear error:', err);
+        })
+        .finally(() => setButtonLoading(btnClearDTC, false));
+    });
 });
 </script>
 @endsection

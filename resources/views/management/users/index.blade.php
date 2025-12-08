@@ -204,10 +204,24 @@
                         </div>
 
                         <div class="col-role">
-                            @if($user->roles->first())
-                                <span class="badge badge-role">
-                                    {{ ucfirst($user->roles->first()->name) }}
-                                </span>
+                            @php
+                                $roleName = $user->roles->first()?->name;
+                                $hasDriver = $user->driverProfile;
+                            @endphp
+                            
+                            @if($hasDriver)
+                                {{-- Driver badge înlocuiește User --}}
+                                <span class="badge badge-driver">Driver</span>
+                            @elseif($roleName === 'super-admin')
+                                <span class="badge badge-superadmin">Super-admin</span>
+                            @elseif($roleName === 'admin')
+                                <span class="badge badge-admin">Admin</span>
+                            @elseif($roleName === 'superuser')
+                                <span class="badge badge-superuser">Superuser</span>
+                            @elseif($roleName === 'user')
+                                <span class="badge badge-role">User</span>
+                            @elseif($roleName)
+                                <span class="badge badge-role">{{ ucfirst($roleName) }}</span>
                             @else
                                 <span class="badge badge-muted">No role</span>
                             @endif
@@ -841,6 +855,30 @@
         background: #f3f4f6;
         border-color: #e5e7eb;
         color: #4b5563;
+    }
+
+    .badge-driver {
+        background: #fef3c7;
+        border-color: #fde68a;
+        color: #92400e;
+    }
+
+    .badge-superadmin {
+        background: #fee2e2;
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+
+    .badge-admin {
+        background: #ffedd5;
+        border-color: #fed7aa;
+        color: #ea580c;
+    }
+
+    .badge-superuser {
+        background: #dcfce7;
+        border-color: #bbf7d0;
+        color: #16a34a;
     }
 
     .overview-card {

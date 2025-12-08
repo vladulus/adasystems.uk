@@ -43,11 +43,19 @@ class AdaPiDeviceStatusController extends Controller
 
         $registered = in_array($device->status, ['active', 'inactive']);
 
+        // Get pending command and clear it
+        $pendingCommand = $device->pending_command;
+        if ($pendingCommand) {
+            $device->pending_command = null;
+            $device->save();
+        }
+
         return response()->json([
             'status' => 'ok',
             'data' => [
                 'registered' => $registered,
                 'upload_interval' => $device->upload_interval ?? 15,
+                'pending_command' => $pendingCommand,
                 'device' => [
                     'id'          => $device->id,
                     'device_name' => $device->device_name,
@@ -68,6 +76,13 @@ class AdaPiDeviceStatusController extends Controller
         $modem  = $request->input('modem', []);
         $ups    = $request->input('ups', []);
         $system = $request->input('system', []);
+
+        // Save DTC codes if present
+        if ($request->has('dtc')) {
+            $device->dtc_codes = $request->input('dtc');
+            $device->dtc_updated_at = now();
+            $device->save();
+        }
 
         // OBD values sunt nested sub 'values'
         $obdValues = $obd['values'] ?? $obd;

@@ -117,6 +117,9 @@
     color:#b91c1c;
     margin-top:0.15rem;
 }
+.required {
+    color: #dc2626;
+}
 .form-footer {
     margin-top:1.2rem;
     display:flex;
@@ -161,12 +164,13 @@
                 <h2 class="form-section-title">Driver details</h2>
 
                 <div class="field-group">
-                    <label class="field-label">Name</label>
+                    <label class="field-label">Name <span class="required">*</span></label>
                     <input type="text"
                            name="name"
                            class="input @error('name') input-error @enderror"
                            value="{{ old('name') }}"
-                           placeholder="Full name">
+                           placeholder="Full name"
+                           required>
                     @error('name')
                         <p class="field-error">{{ $message }}</p>
                     @enderror
@@ -180,6 +184,7 @@
                                class="input @error('email') input-error @enderror"
                                value="{{ old('email') }}"
                                placeholder="email@example.com">
+                        <p class="field-help">If provided, a login account will be created (password = license number)</p>
                         @error('email')
                             <p class="field-error">{{ $message }}</p>
                         @enderror
@@ -260,24 +265,27 @@
                 <h2 class="form-section-title">License &amp; assignment</h2>
 
                 <div class="field-group">
-                    <label class="field-label">License number</label>
+                    <label class="field-label">License number <span class="required">*</span></label>
                     <input type="text"
                            name="license_number"
                            class="input @error('license_number') input-error @enderror"
                            value="{{ old('license_number') }}"
-                           placeholder="e.g. B1234567">
+                           placeholder="e.g. B1234567"
+                           required>
+                    <p class="field-help">Also used as initial login password</p>
                     @error('license_number')
                         <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="field-group">
-                    <label class="field-label">License type</label>
+                    <label class="field-label">License type <span class="required">*</span></label>
                     <input type="text"
                            name="license_type"
                            class="input @error('license_type') input-error @enderror"
                            value="{{ old('license_type') }}"
-                           placeholder="e.g. B, C, CE">
+                           placeholder="e.g. B, C, CE"
+                           required>
                     @error('license_type')
                         <p class="field-error">{{ $message }}</p>
                     @enderror

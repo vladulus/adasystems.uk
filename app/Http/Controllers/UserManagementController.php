@@ -22,7 +22,7 @@ class UserManagementController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $query = User::with(['roles', 'permissions'])
+        $query = User::with(['roles', 'permissions', 'driverProfile'])
             ->when(auth()->user()->hasRole('client'), function ($q) {
                 // Clients can only see users they created
                 $q->where('created_by', auth()->id());
@@ -247,7 +247,19 @@ class UserManagementController extends Controller
 
         $roles = Role::orderBy('name')->get();
         
-        return view('management.users.edit', compact('user', 'roles'));
+        $userRole = $user->roles->first()?->name;
+        $currentUser = auth()->user();
+        
+        // Pentru admin, super-admin trimite lista de superuseri și devices
+        $allSuperusers = [];
+        $allDevices = [];
+        
+        if ($userRole === 'admin' && $currentUser->isEffectiveSuperAdmin()) {
+            $allSuperusers = User::role('superuser')->orderBy('name')->get();
+            $allDevices = \App\Models\Device::with('owner', 'vehicle')->orderBy('device_name')->get();
+        }
+        
+        return view('management.users.edit', compact('user', 'roles', 'allSuperusers', 'allDevices'));
     }
 
     /**
@@ -332,6 +344,24 @@ class UserManagementController extends Controller
             // Reset failed login attempts if status changed to active
             if ($validated['status'] === 'active' && $user->wasChanged('status')) {
                 $user->update(['failed_login_attempts' => 0]);
+            }
+
+            // ============================================================
+            // Process allocations for ADMIN role (only super-admin can do this)
+            // ============================================================
+            $userRole = $user->roles->first()?->name;
+            $currentUser = auth()->user();
+            
+            if ($userRole === 'admin' && $currentUser->isEffectiveSuperAdmin()) {
+                // Sync managed superusers
+                if ($request->has('managed_superusers')) {
+                    $user->managedSuperusers()->sync($request->input('managed_superusers', []));
+                }
+                
+                // Sync managed devices
+                if ($request->has('managed_devices')) {
+                    $user->managedDevices()->sync($request->input('managed_devices', []));
+                }
             }
 
             DB::commit();

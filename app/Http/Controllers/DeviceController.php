@@ -116,19 +116,40 @@ class DeviceController extends Controller
     {
         $this->authorize('update', $device);
 
-        $vehicles = Vehicle::select('id', 'registration_number', 'make', 'model')
-            ->when(auth()->user()->hasRole('client'), function ($q) {
-                $q->where('created_by', auth()->id());
-            })
-            // vehicule neatribuite SAU cel care e deja legat de device-ul curent
+        $device->load(['vehicle', 'owner', 'admins']);
+        
+        $currentUser = auth()->user();
+        $isSuperAdmin = $currentUser->isEffectiveSuperAdmin();
+        $isAdmin = $currentUser->hasRole('admin');
+        
+        // Vehicles: filtrate în funcție de owner-ul device-ului
+        $vehicles = Vehicle::with('owner')
             ->where(function ($q) use ($device) {
                 $q->whereNull('device_id')
                   ->orWhere('device_id', $device->id);
             })
+            ->when($device->owner_id, function($q) use ($device) {
+                // Dacă device-ul are owner, arată doar vehiculele aceluiași owner
+                $q->where('owner_id', $device->owner_id);
+            })
             ->orderBy('registration_number')
             ->get();
+        
+        // Owners (superusers)
+        $allSuperusers = [];
+        if ($isSuperAdmin) {
+            $allSuperusers = \App\Models\User::role('superuser')->orderBy('name')->get();
+        } elseif ($isAdmin) {
+            $allSuperusers = $currentUser->managedSuperusers;
+        }
+        
+        // Admins: doar pentru super-admin
+        $allAdmins = [];
+        if ($isSuperAdmin) {
+            $allAdmins = \App\Models\User::role('admin')->orderBy('name')->get();
+        }
 
-        return view('management.devices.edit', compact('device', 'vehicles'));
+        return view('management.devices.edit', compact('device', 'vehicles', 'allSuperusers', 'allAdmins'));
     }
 
     /**
@@ -138,8 +159,11 @@ class DeviceController extends Controller
     {
         $this->authorize('update', $device);
 
+        $currentUser = auth()->user();
+        $isSuperAdmin = $currentUser->isEffectiveSuperAdmin();
+
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'device_name' => ['required', 'string', 'max:255'],
             'serial_number' => [
                 'nullable',
                 'string',
@@ -147,22 +171,41 @@ class DeviceController extends Controller
                 'unique:devices,serial_number,' . $device->id,
             ],
             'status' => ['required', 'in:active,inactive,maintenance'],
+            'upload_interval' => ['nullable', 'integer', 'min:5', 'max:300'],
             'vehicle_id' => ['nullable', 'exists:vehicles,id'],
+            'owner_id' => ['nullable', 'exists:users,id'],
+            'admin_ids' => ['nullable', 'array'],
+            'admin_ids.*' => ['integer', 'exists:users,id'],
         ]);
+
+        // Verifică că vehiculul aparține aceluiași owner
+        if (!empty($validated['vehicle_id']) && !empty($validated['owner_id'])) {
+            $vehicle = Vehicle::find($validated['vehicle_id']);
+            if ($vehicle && $vehicle->owner_id && $vehicle->owner_id != $validated['owner_id']) {
+                return back()->withInput()->with('error', 'Vehicle belongs to a different owner. Cannot assign.');
+            }
+        }
 
         $device->update([
-            'device_name'   => $validated['name'],
-            'serial_number' => $validated['serial_number'] ?? null,
-            'status'        => $validated['status'],
+            'device_name'     => $validated['device_name'],
+            'serial_number'   => $validated['serial_number'] ?? null,
+            'status'          => $validated['status'],
+            'upload_interval' => $validated['upload_interval'] ?? 15,
+            'owner_id'        => $validated['owner_id'] ?? null,
         ]);
 
-        // curățăm device_id de pe toate vehiculele unde era device-ul ăsta
+        // Curățăm device_id de pe toate vehiculele unde era device-ul ăsta
         Vehicle::where('device_id', $device->id)->update(['device_id' => null]);
 
-        // dacă s-a ales un vehicul nou, îl legăm
+        // Dacă s-a ales un vehicul nou, îl legăm
         if (!empty($validated['vehicle_id'])) {
             Vehicle::where('id', $validated['vehicle_id'])
                 ->update(['device_id' => $device->id]);
+        }
+        
+        // Sync admins: doar super-admin poate
+        if ($isSuperAdmin && $request->has('admin_ids')) {
+            $device->admins()->sync($validated['admin_ids'] ?? []);
         }
 
         return redirect()
