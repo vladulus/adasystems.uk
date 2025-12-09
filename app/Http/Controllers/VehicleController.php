@@ -233,7 +233,14 @@ class VehicleController extends Controller
 
     private function getVehicleStatistics()
     {
+        $user = auth()->user();
         $query = Vehicle::query();
+
+        // Apply scope permission
+        if (!$user->can('vehicles.scope.all')) {
+            $query->where('owner_id', $user->id);
+        }
+
         $base = clone $query;
 
         return [

@@ -58,6 +58,19 @@ class PermissionController extends Controller
 
         $requestedPermissions = $validated['permissions'] ?? [];
 
+        // Process scope fields (dashboard_scope, devices_scope, etc.)
+        $scopeFields = ['dashboard', 'devices', 'vehicles', 'users', 'drivers'];
+        foreach ($scopeFields as $field) {
+            $scopeValue = $request->input($field . '_scope');
+            if ($scopeValue && $scopeValue !== 'none') {
+                $permName = $field . '.scope.' . $scopeValue;
+                // Check if permission exists in DB
+                if (Permission::where('name', $permName)->exists()) {
+                    $requestedPermissions[] = $permName;
+                }
+            }
+        }
+
         // Filtrăm permisiunile cerute prin ceea ce ARE VOIE să dea userul curent
         $available = $this->getAvailablePermissions($currentUser, $user)->pluck('name')->toArray();
         $allowedToAssign = array_values(array_intersect($requestedPermissions, $available));

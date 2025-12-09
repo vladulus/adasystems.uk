@@ -24,7 +24,7 @@
     {{-- Global search --}}
     <div class="card card-search">
         <div class="card-body">
-            <form method="GET" action="{{ route('management.index') }}" class="search-form" id="searchForm">
+            <form method="GET" action="{{ route('management.index') }}" class="search-form" id="searchForm" onsubmit="return false;">
                 <div class="search-row">
                     <div class="search-input-container">
                         <div class="search-input-wrapper">
@@ -52,11 +52,6 @@
                     </div>
 
                     <div class="search-actions">
-                        <button type="submit" class="btn btn-primary search-button">
-                            <i class="fas fa-search"></i>
-                            <span>Search</span>
-                        </button>
-
                         @if ($searchQuery)
                             <a href="{{ route('management.index') }}" class="btn btn-ghost search-clear">
                                 <i class="fas fa-times"></i>
@@ -66,7 +61,7 @@
                     </div>
                 </div>
                 <p class="search-hint">
-                    Search across all <strong>devices</strong>, <strong>vehicles</strong>, <strong>users</strong> and <strong>drivers</strong>.
+                    Start typing to search across all <strong>devices</strong>, <strong>vehicles</strong>, <strong>users</strong> and <strong>drivers</strong>.
                 </p>
             </form>
         </div>
@@ -233,7 +228,7 @@
     @if(!$searchQuery)
         <div class="stats-grid">
             {{-- Devices --}}
-            <div class="stat-card">
+            <div class="stat-card @cannot('devices.view') stat-card-disabled @endcannot">
                 <div class="stat-header">
                     <div class="stat-label">Devices</div>
                     <div class="stat-icon devices">
@@ -247,13 +242,19 @@
                         <span class="badge badge-muted">{{ $stats['devices']['inactive'] }} Inactive</span>
                     </div>
                 </div>
-                <a href="{{ route('management.devices.index') }}" class="btn btn-primary btn-sm stat-button">
-                    Manage devices
-                </a>
+                @can('devices.view')
+                    <a href="{{ route('management.devices.index') }}" class="btn btn-primary btn-sm stat-button">
+                        Manage devices
+                    </a>
+                @else
+                    <span class="btn btn-disabled btn-sm stat-button">
+                        <i class="fas fa-lock"></i> No access
+                    </span>
+                @endcan
             </div>
 
             {{-- Vehicles --}}
-            <div class="stat-card">
+            <div class="stat-card @cannot('vehicles.view') stat-card-disabled @endcannot">
                 <div class="stat-header">
                     <div class="stat-label">Vehicles</div>
                     <div class="stat-icon vehicles">
@@ -267,13 +268,19 @@
                         <span class="badge badge-warning">{{ $stats['vehicles']['maintenance'] }} Maintenance</span>
                     </div>
                 </div>
-                <a href="{{ route('management.vehicles.index') }}" class="btn btn-primary btn-sm stat-button">
-                    Manage vehicles
-                </a>
+                @can('vehicles.view')
+                    <a href="{{ route('management.vehicles.index') }}" class="btn btn-primary btn-sm stat-button">
+                        Manage vehicles
+                    </a>
+                @else
+                    <span class="btn btn-disabled btn-sm stat-button">
+                        <i class="fas fa-lock"></i> No access
+                    </span>
+                @endcan
             </div>
 
             {{-- Users --}}
-            <div class="stat-card">
+            <div class="stat-card @cannot('users.view') stat-card-disabled @endcannot">
                 <div class="stat-header">
                     <div class="stat-label">Users</div>
                     <div class="stat-icon users">
@@ -287,13 +294,19 @@
                         <span class="badge badge-danger">{{ $stats['users']['admins'] }} Admins</span>
                     </div>
                 </div>
-                <a href="{{ route('management.users.index') }}" class="btn btn-primary btn-sm stat-button">
-                    Manage users
-                </a>
+                @can('users.view')
+                    <a href="{{ route('management.users.index') }}" class="btn btn-primary btn-sm stat-button">
+                        Manage users
+                    </a>
+                @else
+                    <span class="btn btn-disabled btn-sm stat-button">
+                        <i class="fas fa-lock"></i> No access
+                    </span>
+                @endcan
             </div>
 
             {{-- Drivers --}}
-            <div class="stat-card">
+            <div class="stat-card @cannot('drivers.view') stat-card-disabled @endcannot">
                 <div class="stat-header">
                     <div class="stat-label">Drivers</div>
                     <div class="stat-icon drivers">
@@ -307,9 +320,15 @@
                         <span class="badge badge-warning">{{ $stats['drivers']['on_leave'] }} On leave</span>
                     </div>
                 </div>
-                <a href="{{ route('management.drivers.index') }}" class="btn btn-primary btn-sm stat-button">
-                    Manage drivers
-                </a>
+                @can('drivers.view')
+                    <a href="{{ route('management.drivers.index') }}" class="btn btn-primary btn-sm stat-button">
+                        Manage drivers
+                    </a>
+                @else
+                    <span class="btn btn-disabled btn-sm stat-button">
+                        <i class="fas fa-lock"></i> No access
+                    </span>
+                @endcan
             </div>
         </div>
 
@@ -716,6 +735,32 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+        transition: all 0.2s;
+    }
+
+    .stat-card-disabled {
+        opacity: 0.55;
+        filter: grayscale(60%);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .stat-card-disabled:hover {
+        opacity: 0.65;
+    }
+
+    .btn-disabled {
+        background: #e5e7eb;
+        color: #9ca3af;
+        cursor: not-allowed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 500;
     }
 
     .stat-header {

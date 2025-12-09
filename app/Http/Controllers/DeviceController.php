@@ -64,11 +64,12 @@ class DeviceController extends Controller
     {
         $this->authorize('create', Device::class);
 
-        // vehicule neatribuite (sau deja legate de device curent, în cazul editului – aici doar neatribuite)
+        $user = auth()->user();
+        
+        // vehicule neatribuite (filtrate după scope)
         $vehicles = Vehicle::select('id', 'registration_number', 'make', 'model')
-            ->when(auth()->user()->hasRole('client'), function ($q) {
-                // dacă ai logică de client -> vehiculele lui
-                $q->where('created_by', auth()->id());
+            ->when(!$user->can('vehicles.scope.all'), function ($q) use ($user) {
+                $q->where('owner_id', $user->id);
             })
             ->whereDoesntHave('device')
             ->orderBy('registration_number')
@@ -235,11 +236,13 @@ class DeviceController extends Controller
      */
     private function getDeviceStatistics()
     {
+        $user = auth()->user();
         $query = Device::query();
 
-        if (auth()->user()->hasRole('client')) {
-            $query->whereHas('vehicle', function ($q) {
-                $q->where('created_by', auth()->id());
+        // Apply scope permission
+        if (!$user->can('devices.scope.all')) {
+            $query->whereHas('vehicle', function ($q) use ($user) {
+                $q->where('owner_id', $user->id);
             });
         }
 

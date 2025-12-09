@@ -1041,11 +1041,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     const t = data.telemetry;
 
                     // GPS
-                    if (t.gps.lat && t.gps.lng) {
-                        marker.setLatLng([t.gps.lat, t.gps.lng]);
-                        map.panTo([t.gps.lat, t.gps.lng]);
+                    if (t.gps.latitude && t.gps.longitude) {
+                        marker.setLatLng([t.gps.latitude, t.gps.longitude]);
+                        map.panTo([t.gps.latitude, t.gps.longitude]);
                         document.getElementById('gpsCoords').textContent = 
-                            t.gps.lat.toFixed(5) + ', ' + t.gps.lng.toFixed(5);
+                            t.gps.latitude.toFixed(5) + ', ' + t.gps.longitude.toFixed(5);
                     }
                     document.getElementById('gpsSpeed').textContent = (t.gps.speed ?? '--') + ' km/h';
                     document.getElementById('gpsSatellites').textContent = t.gps.satellites ?? '--';

@@ -18,6 +18,7 @@ class ManagementController extends Controller
     {
         $searchResults = null;
         $searchQuery = null;
+        $user = auth()->user();
 
         // Global search functionality
         if ($request->filled('search')) {
@@ -25,31 +26,65 @@ class ManagementController extends Controller
             $searchResults = $this->performGlobalSearch($searchQuery);
         }
 
-        // Get statistics for dashboard cards
-        $stats = [
-            'devices' => [
-                'total' => Device::count(),
-                'active' => Device::where('status', 'active')->count(),
-                'inactive' => Device::where('status', 'inactive')->count(),
-            ],
-            'vehicles' => [
-                'total' => Vehicle::count(),
-                'active' => Vehicle::where('status', 'active')->count(),
-                'maintenance' => Vehicle::where('status', 'maintenance')->count(),
-            ],
-            'users' => [
-                'total' => User::count(),
-                'active' => User::where('status', 'active')->count(),
-                'admins' => User::role(['admin', 'super-admin'])->count(),
-            ],
-            'drivers' => [
-                'total' => Driver::count(),
-                'active' => Driver::where('status', 'active')->count(),
-                'on_leave' => Driver::where('status', 'on_leave')->count(),
-            ],
-        ];
+        // Get statistics for dashboard cards (respecting scope permissions)
+        $stats = $this->getStats($user);
 
         return view('management.index', compact('stats', 'searchResults', 'searchQuery'));
+    }
+
+    /**
+     * Get statistics respecting user's scope permissions
+     */
+    private function getStats($user)
+    {
+        // Devices stats
+        $devicesQuery = Device::query();
+        if (!$user->can('devices.scope.all')) {
+            $devicesQuery->whereHas('vehicle', function($q) use ($user) {
+                $q->where('owner_id', $user->id);
+            });
+        }
+        
+        // Vehicles stats
+        $vehiclesQuery = Vehicle::query();
+        if (!$user->can('vehicles.scope.all')) {
+            $vehiclesQuery->where('owner_id', $user->id);
+        }
+        
+        // Users stats
+        $usersQuery = User::query();
+        if (!$user->can('users.scope.all')) {
+            $usersQuery->where('created_by', $user->id);
+        }
+        
+        // Drivers stats
+        $driversQuery = Driver::query();
+        if (!$user->can('drivers.scope.all')) {
+            $driversQuery->where('user_id', $user->id);
+        }
+
+        return [
+            'devices' => [
+                'total' => (clone $devicesQuery)->count(),
+                'active' => (clone $devicesQuery)->where('status', 'active')->count(),
+                'inactive' => (clone $devicesQuery)->where('status', 'inactive')->count(),
+            ],
+            'vehicles' => [
+                'total' => (clone $vehiclesQuery)->count(),
+                'active' => (clone $vehiclesQuery)->where('status', 'active')->count(),
+                'maintenance' => (clone $vehiclesQuery)->where('status', 'maintenance')->count(),
+            ],
+            'users' => [
+                'total' => (clone $usersQuery)->count(),
+                'active' => (clone $usersQuery)->where('status', 'active')->count(),
+                'admins' => (clone $usersQuery)->role(['admin', 'super-admin'])->count(),
+            ],
+            'drivers' => [
+                'total' => (clone $driversQuery)->count(),
+                'active' => (clone $driversQuery)->where('status', 'active')->count(),
+                'on_leave' => (clone $driversQuery)->where('status', 'on_leave')->count(),
+            ],
+        ];
     }
 
     /**
@@ -73,10 +108,10 @@ class ManagementController extends Controller
               ->orWhere('id', $query);
         });
 
-        // Clients/Superusers only see their own devices
-        if ($user->hasRole('client')) {
+        // Apply scope: if user doesn't have 'all' permission, show only own
+        if (!$user->can('devices.scope.all')) {
             $devicesQuery->whereHas('vehicle', function($vehicleQuery) use ($user) {
-                $vehicleQuery->where('created_by', $user->id);
+                $vehicleQuery->where('owner_id', $user->id);
             });
         }
 
@@ -86,16 +121,16 @@ class ManagementController extends Controller
 
         // === VEHICLES ===
         $vehiclesQuery = Vehicle::where(function($q) use ($query) {
-            $q->where('plate_number', 'like', "%{$query}%")
+            $q->where('registration_number', 'like', "%{$query}%")
               ->orWhere('vin', 'like', "%{$query}%")
               ->orWhere('make', 'like', "%{$query}%")
               ->orWhere('model', 'like', "%{$query}%")
               ->orWhere('id', $query);
         });
 
-        // Clients/Superusers only see their own vehicles
-        if ($user->hasRole('client')) {
-            $vehiclesQuery->where('created_by', $user->id);
+        // Apply scope
+        if (!$user->can('vehicles.scope.all')) {
+            $vehiclesQuery->where('owner_id', $user->id);
         }
 
         if ($user->can('vehicles.view')) {
@@ -111,8 +146,8 @@ class ManagementController extends Controller
               ->orWhere('id', $query);
         });
 
-        // Clients can only see users they created
-        if ($user->hasRole('client')) {
+        // Apply scope
+        if (!$user->can('users.scope.all')) {
             $usersQuery->where('created_by', $user->id);
         }
 
@@ -129,9 +164,9 @@ class ManagementController extends Controller
               ->orWhere('id', $query);
         });
 
-        // Clients only see their own drivers
-        if ($user->hasRole('client')) {
-            $driversQuery->where('created_by', $user->id);
+        // Apply scope
+        if (!$user->can('drivers.scope.all')) {
+            $driversQuery->where('user_id', $user->id);
         }
 
         if ($user->can('drivers.view')) {

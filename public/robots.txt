@@ -1,2 +1,31 @@
+# robots.txt for ADASystems
+# https://adasystems.uk
+
 User-agent: *
-Disallow:
+
+# Allow public pages
+Allow: /
+Allow: /contact
+Allow: /legal/
+
+# Disallow management and authenticated areas
+Disallow: /management/
+Disallow: /dashboard
+Disallow: /hub
+Disallow: /login
+Disallow: /logout
+Disallow: /password/
+Disallow: /ada-pi/
+Disallow: /pi-dashboard
+Disallow: /api/
+
+# Disallow Laravel system paths
+Disallow: /storage/
+Disallow: /vendor/
+Disallow: /_debugbar/
+
+# Sitemap location
+Sitemap: https://adasystems.uk/sitemap.xml
+
+# Crawl-delay (be nice to server)
+Crawl-delay: 1

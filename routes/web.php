@@ -155,10 +155,10 @@ Route::middleware('auth')->group(function () {
         });
 
 
-        // Management home (tabs page) – doar super-admin / admin
+        // Management home (tabs page) – anyone with view permissions
         Route::get('/', [ManagementController::class, 'index'])
             ->name('index')
-            ->middleware('role:super-admin|admin');
+            ->middleware('permission:devices.view|vehicles.view|users.view|drivers.view');
 
         // =============================
         // DEVICES
@@ -323,3 +323,28 @@ Route::get('/contact', [ContactController::class, 'show'])
 
 Route::post('/contact', [ContactController::class, 'send'])
     ->name('contact.send');
+
+// =============================
+// LEGAL PAGES (public)
+// =============================
+Route::prefix('legal')->name('legal.')->group(function () {
+    Route::get('/terms', function () {
+        return view('legal.terms');
+    })->name('terms');
+
+    Route::get('/privacy', function () {
+        return view('legal.privacy');
+    })->name('privacy');
+
+    Route::get('/cookies', function () {
+        return view('legal.cookies');
+    })->name('cookies');
+
+    Route::get('/acceptable-use', function () {
+        return view('legal.aup');
+    })->name('aup');
+
+    Route::get('/sla', function () {
+        return view('legal.sla');
+    })->name('sla');
+});

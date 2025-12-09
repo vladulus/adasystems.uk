@@ -310,7 +310,13 @@ class DriverController extends Controller
      */
     private function getDriverStatistics(): array
     {
+        $user = auth()->user();
         $base = Driver::query();
+
+        // Apply scope permission
+        if (!$user->can('drivers.scope.all')) {
+            $base->where('user_id', $user->id);
+        }
 
         return [
             'total'    => (clone $base)->count(),

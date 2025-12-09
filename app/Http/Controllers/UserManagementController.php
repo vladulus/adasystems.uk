@@ -22,10 +22,12 @@ class UserManagementController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
+        $user = auth()->user();
+        
         $query = User::with(['roles', 'permissions', 'driverProfile'])
-            ->when(auth()->user()->hasRole('client'), function ($q) {
-                // Clients can only see users they created
-                $q->where('created_by', auth()->id());
+            ->when(!$user->can('users.scope.all'), function ($q) use ($user) {
+                // Users without scope.all can only see users they created
+                $q->where('created_by', $user->id);
             });
 
         // Advanced search
@@ -456,10 +458,12 @@ class UserManagementController extends Controller
      */
     private function getUserStatistics()
     {
+        $user = auth()->user();
         $query = User::query();
 
-        if (auth()->user()->hasRole('client')) {
-            $query->where('created_by', auth()->id());
+        // Apply scope permission
+        if (!$user->can('users.scope.all')) {
+            $query->where('created_by', $user->id);
         }
 
         return [
