@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 // Modele
@@ -38,6 +38,11 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        // Root bypass: vlad@impulsive.ro has access to everything
+        Gate::before(function ($user, $ability) {
+            if ($user->isRoot()) {
+                return true;
+            }
+        });
     }
 }

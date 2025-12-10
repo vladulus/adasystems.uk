@@ -173,69 +173,109 @@ class AdaPiDeviceStatusController extends Controller
     }
 
     /**
-     * Sync config from device to settings if settings are empty
+     * Sync config from device to settings for display
+     * Only sync on first connect (when settings is null) - after that, cloud is master
      */
     private function syncConfigFromDevice(Device $device, Request $request): void
     {
+        // Only sync if settings not yet initialized (first connect)
+        if ($device->settings !== null) {
+            return;
+        }
+
         $config = $request->input('config');
         if (!$config) {
             return;
         }
 
-        $settings = $device->settings ?? [];
-        $updated = false;
+        $settings = [];
 
-        // Modem settings - sync if cloud is empty
+        // WiFi settings
+        if (isset($config['wifi'])) {
+            $settings['wifi'] = [
+                'enabled' => $config['wifi']['enabled'] ?? false,
+                'ssid' => $config['wifi']['ssid'] ?? '',
+                'password' => $config['wifi']['password'] ?? '',
+                'dhcp' => $config['wifi']['dhcp'] ?? true,
+                'ip' => $config['wifi']['ip'] ?? '',
+                'gateway' => $config['wifi']['gateway'] ?? '',
+                'dns' => $config['wifi']['dns'] ?? '',
+            ];
+        }
+
+        // Bluetooth settings
+        if (isset($config['bluetooth'])) {
+            $settings['bluetooth'] = [
+                'enabled' => $config['bluetooth']['enabled'] ?? true,
+                'discoverable' => $config['bluetooth']['discoverable'] ?? false,
+                'name' => $config['bluetooth']['name'] ?? '',
+            ];
+        }
+
+        // Modem settings
         if (isset($config['modem'])) {
-            if (!isset($settings['modem'])) {
-                $settings['modem'] = [];
-            }
-            
-            if (empty($settings['modem']['apn']) && !empty($config['modem']['apn'])) {
-                $settings['modem']['apn'] = $config['modem']['apn'];
-                $settings['modem']['apn_username'] = $config['modem']['apn_username'] ?? '';
-                $settings['modem']['apn_password'] = $config['modem']['apn_password'] ?? '';
-                $settings['modem']['failover_enabled'] = $config['modem']['failover_enabled'] ?? true;
-                $updated = true;
-                \Log::info("Synced modem config from device {$device->device_name}");
-            }
+            $settings['modem'] = [
+                'apn' => $config['modem']['apn'] ?? '',
+                'apn_username' => $config['modem']['apn_username'] ?? '',
+                'apn_password' => $config['modem']['apn_password'] ?? '',
+                'network_mode' => $config['modem']['network_mode'] ?? 'auto',
+                'roaming' => $config['modem']['roaming'] ?? false,
+                'failover_enabled' => $config['modem']['failover_enabled'] ?? true,
+            ];
         }
 
-        // OBD settings - sync if cloud is empty
+        // GPS settings
+        if (isset($config['gps'])) {
+            $settings['gps'] = [
+                'enabled' => $config['gps']['enabled'] ?? true,
+                'update_rate' => $config['gps']['update_rate'] ?? 1,
+            ];
+        }
+
+        // OBD settings
         if (isset($config['obd'])) {
-            if (!isset($settings['obd'])) {
-                $settings['obd'] = [];
-            }
-            
-            if (!isset($settings['obd']['enabled']) && isset($config['obd']['enabled'])) {
-                $settings['obd']['enabled'] = $config['obd']['enabled'];
-                $settings['obd']['connection'] = $config['obd']['connection'] ?? 'none';
-                $settings['obd']['bluetooth_mac'] = $config['obd']['bluetooth_mac'] ?? '';
-                $settings['obd']['usb_port'] = $config['obd']['usb_port'] ?? '';
-                $updated = true;
-                \Log::info("Synced OBD config from device {$device->device_name}");
-            }
+            $settings['obd'] = [
+                'enabled' => $config['obd']['enabled'] ?? false,
+                'connection' => $config['obd']['connection'] ?? 'none',
+                'bluetooth_mac' => $config['obd']['bluetooth_mac'] ?? '',
+                'usb_port' => $config['obd']['usb_port'] ?? '',
+                'protocol' => $config['obd']['protocol'] ?? 'auto',
+                'poll_interval' => $config['obd']['poll_interval'] ?? 2,
+            ];
         }
 
-        // UPS settings - sync if cloud is empty
+        // UPS settings
         if (isset($config['ups'])) {
-            if (!isset($settings['ups'])) {
-                $settings['ups'] = [];
-            }
-            
-            if (empty($settings['ups']['type']) && !empty($config['ups']['type'])) {
-                $settings['ups']['type'] = $config['ups']['type'];
-                $settings['ups']['shutdown_pct'] = $config['ups']['shutdown_pct'] ?? 10;
-                $updated = true;
-                \Log::info("Synced UPS config from device {$device->device_name}");
-            }
+            $settings['ups'] = [
+                'type' => $config['ups']['type'] ?? 'none',
+                'shutdown_pct' => $config['ups']['shutdown_pct'] ?? 15,
+                'auto_power_on' => $config['ups']['auto_power_on'] ?? true,
+                'shutdown_delay' => $config['ups']['shutdown_delay'] ?? 30,
+            ];
         }
 
-        if ($updated) {
-            $device->settings = $settings;
-            $device->settings_updated_at = now();
-            $device->save();
+        // Fan settings
+        if (isset($config['fan'])) {
+            $settings['fan'] = [
+                'mode' => $config['fan']['mode'] ?? 'auto',
+                'threshold' => $config['fan']['threshold'] ?? 50,
+                'speed' => $config['fan']['speed'] ?? 100,
+            ];
         }
+
+        // System settings
+        if (isset($config['system'])) {
+            $settings['system'] = [
+                'timezone' => $config['system']['timezone'] ?? 'UTC',
+                'hostname' => $config['system']['hostname'] ?? '',
+                'auto_update' => $config['system']['auto_update'] ?? false,
+                'reboot_schedule' => $config['system']['reboot_schedule'] ?? 'disabled',
+            ];
+        }
+
+        // Save settings for display (but NOT settings_updated_at - that's only set from UI)
+        $device->settings = $settings;
+        $device->save();
     }
 
     /**
