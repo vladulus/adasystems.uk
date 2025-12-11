@@ -196,14 +196,27 @@
 
                 <div class="field-group">
                     <label class="field-label">Registration number (plate)</label>
-                    <input type="text"
-                           name="registration_number"
-                           class="input @error('registration_number') input-error @enderror"
-                           value="{{ old('registration_number') }}"
-                           placeholder="e.g. ADA 123">
+                    <div style="display:flex;gap:0.5rem;">
+                        <input type="text"
+                               name="registration_number"
+                               id="registration_number"
+                               class="input @error('registration_number') input-error @enderror"
+                               value="{{ old('registration_number') }}"
+                               placeholder="e.g. ADA 123"
+                               style="flex:1;">
+                        <button type="button" 
+                                id="dvla-lookup-btn"
+                                class="btn btn-secondary"
+                                onclick="dvlaLookup()"
+                                title="Lookup vehicle details from DVLA">
+                            <i class="fas fa-search"></i>
+                            <span>DVLA</span>
+                        </button>
+                    </div>
                     @error('registration_number')
                         <p class="field-error">{{ $message }}</p>
                     @enderror
+                    <small class="field-help" id="dvla-status"></small>
                 </div>
 
                 <div class="field-grid-2">
@@ -211,6 +224,7 @@
                         <label class="field-label">Make</label>
                         <input type="text"
                                name="make"
+                               id="make"
                                class="input @error('make') input-error @enderror"
                                value="{{ old('make') }}"
                                placeholder="e.g. Ford">
@@ -223,6 +237,7 @@
                         <label class="field-label">Model</label>
                         <input type="text"
                                name="model"
+                               id="model"
                                class="input @error('model') input-error @enderror"
                                value="{{ old('model') }}"
                                placeholder="e.g. Transit">
@@ -237,6 +252,7 @@
                         <label class="field-label">Year</label>
                         <input type="number"
                                name="year"
+                               id="year"
                                class="input @error('year') input-error @enderror"
                                value="{{ old('year') }}"
                                placeholder="e.g. 2024">
@@ -249,10 +265,67 @@
                         <label class="field-label">VIN (optional)</label>
                         <input type="text"
                                name="vin"
+                               id="vin"
                                class="input @error('vin') input-error @enderror"
                                value="{{ old('vin') }}"
                                placeholder="Vehicle identification number">
                         @error('vin')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="field-grid-2">
+                    <div class="field-group">
+                        <label class="field-label">Colour</label>
+                        <input type="text"
+                               name="colour"
+                               id="colour"
+                               class="input @error('colour') input-error @enderror"
+                               value="{{ old('colour') }}"
+                               placeholder="e.g. BLUE">
+                        @error('colour')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Fuel type</label>
+                        <input type="text"
+                               name="fuel_type"
+                               id="fuel_type"
+                               class="input @error('fuel_type') input-error @enderror"
+                               value="{{ old('fuel_type') }}"
+                               placeholder="e.g. PETROL">
+                        @error('fuel_type')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="field-grid-2">
+                    <div class="field-group">
+                        <label class="field-label">Engine capacity (cc)</label>
+                        <input type="number"
+                               name="engine_capacity"
+                               id="engine_capacity"
+                               class="input @error('engine_capacity') input-error @enderror"
+                               value="{{ old('engine_capacity') }}"
+                               placeholder="e.g. 2000">
+                        @error('engine_capacity')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">CO2 emissions (g/km)</label>
+                        <input type="number"
+                               name="co2_emissions"
+                               id="co2_emissions"
+                               class="input @error('co2_emissions') input-error @enderror"
+                               value="{{ old('co2_emissions') }}"
+                               placeholder="e.g. 135">
+                        @error('co2_emissions')
                             <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
@@ -295,6 +368,63 @@
                         Only devices that are not already assigned to another vehicle are listed here.
                     </small>
                 </div>
+
+                <h2 class="form-section-title" style="margin-top:1.5rem;">MOT & Tax (from DVLA)</h2>
+
+                <div class="field-grid-2">
+                    <div class="field-group">
+                        <label class="field-label">MOT status</label>
+                        <input type="text"
+                               name="mot_status"
+                               id="mot_status"
+                               class="input"
+                               value="{{ old('mot_status') }}"
+                               placeholder="e.g. Valid"
+                               readonly>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">MOT expiry</label>
+                        <input type="date"
+                               name="mot_expiry_date"
+                               id="mot_expiry_date"
+                               class="input"
+                               value="{{ old('mot_expiry_date') }}">
+                    </div>
+                </div>
+
+                <div class="field-grid-2">
+                    <div class="field-group">
+                        <label class="field-label">Tax status</label>
+                        <input type="text"
+                               name="tax_status"
+                               id="tax_status"
+                               class="input"
+                               value="{{ old('tax_status') }}"
+                               placeholder="e.g. Taxed"
+                               readonly>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Tax due date</label>
+                        <input type="date"
+                               name="tax_due_date"
+                               id="tax_due_date"
+                               class="input"
+                               value="{{ old('tax_due_date') }}">
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Euro status</label>
+                    <input type="text"
+                           name="euro_status"
+                           id="euro_status"
+                           class="input"
+                           value="{{ old('euro_status') }}"
+                           placeholder="e.g. EURO 6"
+                           readonly>
+                </div>
             </div>
         </div>
 
@@ -304,4 +434,81 @@
         </div>
     </form>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+async function dvlaLookup() {
+    const regInput = document.getElementById('registration_number');
+    const btn = document.getElementById('dvla-lookup-btn');
+    const status = document.getElementById('dvla-status');
+    
+    const registration = regInput.value.trim();
+    
+    if (!registration) {
+        status.textContent = 'Please enter a registration number first';
+        status.style.color = '#b91c1c';
+        return;
+    }
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Looking up...</span>';
+    status.textContent = 'Searching DVLA database...';
+    status.style.color = '#6b7280';
+    
+    try {
+        const response = await fetch('{{ route("management.dvla.vehicle") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ registration: registration }),
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            // Auto-fill the form fields
+            const data = result.data;
+            
+            if (data.make) document.getElementById('make').value = data.make;
+            if (data.year) document.getElementById('year').value = data.year;
+            if (data.colour) document.getElementById('colour').value = data.colour;
+            if (data.fuel_type) document.getElementById('fuel_type').value = data.fuel_type;
+            if (data.engine_capacity) document.getElementById('engine_capacity').value = data.engine_capacity;
+            if (data.co2_emissions) document.getElementById('co2_emissions').value = data.co2_emissions;
+            if (data.mot_status) document.getElementById('mot_status').value = data.mot_status;
+            if (data.mot_expiry_date) document.getElementById('mot_expiry_date').value = data.mot_expiry_date;
+            if (data.tax_status) document.getElementById('tax_status').value = data.tax_status;
+            if (data.tax_due_date) document.getElementById('tax_due_date').value = data.tax_due_date;
+            if (data.euro_status) document.getElementById('euro_status').value = data.euro_status;
+            
+            status.textContent = '✓ Vehicle found! Fields auto-filled.' + (result.sandbox ? ' (Sandbox mode)' : '');
+            status.style.color = '#059669';
+        } else {
+            status.textContent = result.error || 'Vehicle not found';
+            status.style.color = '#b91c1c';
+        }
+    } catch (error) {
+        console.error('DVLA lookup error:', error);
+        status.textContent = 'Error connecting to DVLA service';
+        status.style.color = '#b91c1c';
+    } finally {
+        // Reset button
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-search"></i> <span>DVLA</span>';
+    }
+}
+
+// Auto-lookup when user leaves registration field (optional)
+document.getElementById('registration_number').addEventListener('blur', function() {
+    // Only auto-lookup if make field is empty (not already filled)
+    if (this.value.trim() && !document.getElementById('make').value) {
+        // dvlaLookup(); // Uncomment to enable auto-lookup on blur
+    }
+});
+</script>
 @endsection

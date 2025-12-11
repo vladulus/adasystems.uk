@@ -238,98 +238,204 @@ class User extends Authenticatable implements JWTSubject
     }
 
     // =========================================================================
-    // HELPER METHODS - VISIBILITY (based on role and assignments)
+    // HELPER METHODS - VISIBILITY (based on PERMISSIONS + SCOPE)
     // =========================================================================
 
     /**
-     * Get all devices visible to this user based on role
+     * Get all devices visible to this user based on permissions and scope
      */
     public function getVisibleDevices()
     {
-        if ($this->isEffectiveSuperAdmin()) {
+        // Root bypasses everything
+        if ($this->isRoot()) {
             return Device::all();
         }
 
-        if ($this->hasRole('admin')) {
-            // Admin vede device-urile pe care le administrează
-            return $this->managedDevices;
+        // Check scope permission (kill switch)
+        $hasScopeAll = $this->can('devices.scope.all');
+        $hasScopeOwn = $this->can('devices.scope.own');
+
+        // No scope = no access (kill switch active)
+        if (!$hasScopeAll && !$hasScopeOwn) {
+            return collect([]);
         }
 
-        if ($this->isSuperuser()) {
-            // Superuser vede device-urile pe care le deține
-            return $this->ownedDevices;
+        // scope.all = can see everything based on role hierarchy
+        if ($hasScopeAll) {
+            if ($this->isEffectiveSuperAdmin()) {
+                return Device::all();
+            }
+            if ($this->hasRole('admin')) {
+                return $this->managedDevices;
+            }
+            if ($this->isSuperuser()) {
+                return $this->ownedDevices;
+            }
+            if ($this->vehicle && $this->vehicle->device) {
+                return collect([$this->vehicle->device]);
+            }
+            return collect([]);
         }
 
-        // Driver vede doar device-ul mașinii lui
-        if ($this->vehicle && $this->vehicle->device) {
-            return collect([$this->vehicle->device]);
+        // scope.own = can see only own devices
+        if ($hasScopeOwn) {
+            if ($this->hasRole('admin')) {
+                return $this->managedDevices;
+            }
+            if ($this->isSuperuser()) {
+                return $this->ownedDevices;
+            }
+            if ($this->vehicle && $this->vehicle->device) {
+                return collect([$this->vehicle->device]);
+            }
+            return collect([]);
         }
 
         return collect([]);
     }
 
     /**
-     * Get all vehicles visible to this user based on role
+     * Get all vehicles visible to this user based on permissions and scope
      */
     public function getVisibleVehicles()
     {
-        if ($this->isEffectiveSuperAdmin()) {
+        // Root bypasses everything
+        if ($this->isRoot()) {
             return Vehicle::all();
         }
 
-        if ($this->hasRole('admin')) {
-            // Admin vede vehiculele superuserilor pe care îi administrează
-            $superuserIds = $this->managedSuperusers->pluck('id');
-            return Vehicle::whereIn('owner_id', $superuserIds)->get();
+        // Check scope permission (kill switch)
+        $hasScopeAll = $this->can('vehicles.scope.all');
+        $hasScopeOwn = $this->can('vehicles.scope.own');
+
+        // No scope = no access (kill switch active)
+        if (!$hasScopeAll && !$hasScopeOwn) {
+            return collect([]);
         }
 
-        if ($this->isSuperuser()) {
-            return $this->ownedVehicles;
+        // scope.all = can see everything based on role hierarchy
+        if ($hasScopeAll) {
+            if ($this->isEffectiveSuperAdmin()) {
+                return Vehicle::all();
+            }
+            if ($this->hasRole('admin')) {
+                $superuserIds = $this->managedSuperusers->pluck('id');
+                return Vehicle::whereIn('owner_id', $superuserIds)->get();
+            }
+            if ($this->isSuperuser()) {
+                return $this->ownedVehicles;
+            }
+            if ($this->vehicle) {
+                return collect([$this->vehicle]);
+            }
+            return collect([]);
         }
 
-        // Driver vede doar mașina lui
-        if ($this->vehicle) {
-            return collect([$this->vehicle]);
+        // scope.own = can see only own vehicles
+        if ($hasScopeOwn) {
+            if ($this->hasRole('admin')) {
+                $superuserIds = $this->managedSuperusers->pluck('id');
+                return Vehicle::whereIn('owner_id', $superuserIds)->get();
+            }
+            if ($this->isSuperuser()) {
+                return $this->ownedVehicles;
+            }
+            if ($this->vehicle) {
+                return collect([$this->vehicle]);
+            }
+            return collect([]);
         }
 
         return collect([]);
     }
 
     /**
-     * Get all drivers visible to this user based on role
+     * Get all drivers visible to this user based on permissions and scope
      */
     public function getVisibleDrivers()
     {
-        if ($this->isEffectiveSuperAdmin()) {
+        // Root bypasses everything
+        if ($this->isRoot()) {
             return Driver::all();
         }
 
-        if ($this->hasRole('admin')) {
-            // Admin vede driverii superuserilor pe care îi administrează
-            $superuserIds = $this->managedSuperusers->pluck('id');
-            return Driver::whereHas('employers', function($q) use ($superuserIds) {
-                $q->whereIn('superuser_id', $superuserIds);
-            })->get();
+        // Check scope permission (kill switch)
+        $hasScopeAll = $this->can('drivers.scope.all');
+        $hasScopeOwn = $this->can('drivers.scope.own');
+
+        // No scope = no access (kill switch active)
+        if (!$hasScopeAll && !$hasScopeOwn) {
+            return collect([]);
         }
 
-        if ($this->isSuperuser()) {
-            return $this->employedDrivers;
+        // scope.all = can see everything based on role hierarchy
+        if ($hasScopeAll) {
+            if ($this->isEffectiveSuperAdmin()) {
+                return Driver::all();
+            }
+            if ($this->hasRole('admin')) {
+                $superuserIds = $this->managedSuperusers->pluck('id');
+                return Driver::whereHas('employers', function($q) use ($superuserIds) {
+                    $q->whereIn('superuser_id', $superuserIds);
+                })->get();
+            }
+            if ($this->isSuperuser()) {
+                return $this->employedDrivers;
+            }
+            return collect([]);
+        }
+
+        // scope.own = can see only own drivers
+        if ($hasScopeOwn) {
+            if ($this->hasRole('admin')) {
+                $superuserIds = $this->managedSuperusers->pluck('id');
+                return Driver::whereHas('employers', function($q) use ($superuserIds) {
+                    $q->whereIn('superuser_id', $superuserIds);
+                })->get();
+            }
+            if ($this->isSuperuser()) {
+                return $this->employedDrivers;
+            }
+            return collect([]);
         }
 
         return collect([]);
     }
 
     /**
-     * Get all superusers visible to this user based on role
+     * Get all superusers visible to this user based on permissions and scope
      */
     public function getVisibleSuperusers()
     {
-        if ($this->isEffectiveSuperAdmin()) {
+        // Root bypasses everything
+        if ($this->isRoot()) {
             return User::role('superuser')->get();
         }
 
-        if ($this->hasRole('admin')) {
-            return $this->managedSuperusers;
+        // Check scope permission (kill switch)
+        $hasScopeAll = $this->can('users.scope.all');
+        $hasScopeOwn = $this->can('users.scope.own');
+
+        // No scope = no access (kill switch active)
+        if (!$hasScopeAll && !$hasScopeOwn) {
+            return collect([]);
+        }
+
+        if ($hasScopeAll) {
+            if ($this->isEffectiveSuperAdmin()) {
+                return User::role('superuser')->get();
+            }
+            if ($this->hasRole('admin')) {
+                return $this->managedSuperusers;
+            }
+            return collect([]);
+        }
+
+        if ($hasScopeOwn) {
+            if ($this->hasRole('admin')) {
+                return $this->managedSuperusers;
+            }
+            return collect([]);
         }
 
         return collect([]);

@@ -7,29 +7,21 @@ use App\Models\Device;
 use App\Models\DeviceTelemetry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class AdaPiWebDeviceController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Afișează Device Dashboard cu telemetrie live
      */
     public function show(Device $device)
     {
-        // Verifică dacă user-ul are acces la acest device
-        $user = auth()->user();
-        
-        if (!$user->hasRole(['super-admin', 'admin'])) {
-            // Superuser/client poate vedea doar device-urile asociate vehiculelor lui
-            $hasAccess = $device->vehicle && $device->vehicle->created_by === $user->id;
-            if (!$hasAccess && $device->owner_id !== $user->id) {
-                abort(403, 'Nu ai acces la acest device.');
-            }
-        }
+        $this->authorize('viewDashboard', $device);
 
-        // Ultima telemetrie
         $latestTelemetry = $device->latestTelemetry;
 
-        // Istoric GPS pentru hartă (ultimele 100 puncte)
         $gpsHistory = DeviceTelemetry::where('device_id', $device->id)
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
@@ -39,7 +31,6 @@ class AdaPiWebDeviceController extends Controller
             ->reverse()
             ->values();
 
-        // Statistici ultimele 24h
         $stats = $this->getDeviceStats($device);
 
         return view('ada-pi.device-dashboard', compact(
@@ -55,6 +46,8 @@ class AdaPiWebDeviceController extends Controller
      */
     public function liveData(Device $device)
     {
+        $this->authorize('viewDashboard', $device);
+
         $latestTelemetry = $device->latestTelemetry;
 
         return response()->json([
@@ -113,6 +106,8 @@ class AdaPiWebDeviceController extends Controller
      */
     public function updateInterval(Request $request, Device $device)
     {
+        $this->authorize('manageSettings', $device);
+
         $request->validate([
             'interval' => 'required|integer|min:5|max:60'
         ]);
@@ -190,6 +185,8 @@ class AdaPiWebDeviceController extends Controller
      */
     public function readDTC(Device $device)
     {
+        $this->authorize('sendCommands', $device);
+
         $device->pending_command = 'read_dtc';
         $device->save();
 
@@ -206,6 +203,8 @@ class AdaPiWebDeviceController extends Controller
      */
     public function clearDTC(Device $device)
     {
+        $this->authorize('sendCommands', $device);
+
         $device->pending_command = 'clear_dtc';
         $device->save();
 
@@ -220,6 +219,8 @@ class AdaPiWebDeviceController extends Controller
      */
     public function updateRetention(Request $request, Device $device)
     {
+        $this->authorize('manageSettings', $device);
+
         $validated = $request->validate([
             'retention_days' => 'required|integer|in:1,7,14,30,60,90'
         ]);
@@ -238,6 +239,8 @@ class AdaPiWebDeviceController extends Controller
      */
     public function settings(Device $device)
     {
+        $this->authorize('manageSettings', $device);
+
         $settings = $device->settings ?? $this->getDefaultSettings();
 
         return view('ada-pi.device-settings', [
@@ -251,6 +254,8 @@ class AdaPiWebDeviceController extends Controller
      */
     public function saveSettings(Request $request, Device $device)
     {
+        $this->authorize('manageSettings', $device);
+
         $settings = [
             'cloud' => [
                 'upload_url' => $request->input('cloud_upload_url'),
@@ -324,6 +329,8 @@ class AdaPiWebDeviceController extends Controller
      */
     public function sendCommand(Request $request, Device $device)
     {
+        $this->authorize('sendCommands', $device);
+
         $validated = $request->validate([
             'command' => 'required|string|in:reboot,factory_reset,update,restart_services'
         ]);
@@ -361,6 +368,8 @@ class AdaPiWebDeviceController extends Controller
      */
     public function accept(Device $device): RedirectResponse
     {
+        $this->authorize('update', $device);
+
         $device->status = 'active';
         $device->save();
         return back()->with('status', "Device {$device->device_name} approved.");
@@ -371,6 +380,8 @@ class AdaPiWebDeviceController extends Controller
      */
     public function refuse(Device $device): RedirectResponse
     {
+        $this->authorize('update', $device);
+
         $device->status = 'inactive';
         $device->save();
         return back()->with('status', "Device {$device->device_name} refused.");

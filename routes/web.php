@@ -12,6 +12,7 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\AdaPiWebDeviceController;
+use App\Http\Controllers\DvlaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -152,6 +153,22 @@ Route::middleware('auth')->group(function () {
             Route::get('/vehicles', [App\Http\Controllers\AutocompleteController::class, 'vehicles'])->name('vehicles');
             Route::get('/users', [App\Http\Controllers\AutocompleteController::class, 'users'])->name('users');
             Route::get('/drivers', [App\Http\Controllers\AutocompleteController::class, 'drivers'])->name('drivers');
+        });
+
+        // =============================
+        // DVLA LOOKUP ROUTES
+        // =============================
+        Route::prefix('dvla')->name('dvla.')->group(function () {
+            Route::post('/vehicle', [DvlaController::class, 'lookupVehicle'])
+                ->name('vehicle')
+                ->middleware('permission:vehicles.add|vehicles.edit');
+            
+            Route::post('/driver', [DvlaController::class, 'lookupDriver'])
+                ->name('driver')
+                ->middleware('permission:drivers.add|drivers.edit');
+            
+            Route::get('/test-registrations', [DvlaController::class, 'getTestRegistrations'])
+                ->name('test');
         });
 
 
@@ -323,6 +340,29 @@ Route::get('/contact', [ContactController::class, 'show'])
 
 Route::post('/contact', [ContactController::class, 'send'])
     ->name('contact.send');
+
+// =============================
+// APP DOWNLOAD (public)
+// =============================
+Route::get('/app', function () {
+    return view('app-download');
+})->name('app.download');
+
+// =============================
+// MOBILE APP ROUTES
+// =============================
+Route::get('/app-home', function () {
+    return view('app-home');
+})->name('app.home');
+
+Route::get('/app-pi', function () {
+    $user = auth()->user();
+    if (!$user) {
+        return redirect()->route('app.home');
+    }
+    $devices = $user->getVisibleDevices();
+    return view('pi-dashboard-mobile', compact('devices'));
+})->name('app.pi')->middleware('auth');
 
 // =============================
 // LEGAL PAGES (public)

@@ -322,6 +322,29 @@
     color:#9ca3af;
     font-weight:600;
 }
+.vehicles-table-head .sortable {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s;
+}
+.vehicles-table-head .sortable:hover {
+    color: #6366f1;
+}
+.sort-icon {
+    font-size: 10px;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+}
+.sort-icon.active {
+    opacity: 1;
+    color: #6366f1;
+}
+.vehicles-table-head .sortable:hover .sort-icon {
+    opacity: 0.7;
+}
 .vehicles-table-row {
     padding:0.65rem 0.9rem;
     border-top:1px solid #f3f4f6;
@@ -561,12 +584,38 @@
             </span>
         </div>
 
+        @php
+            $currentSort = request('sort', 'registration_number');
+            $currentDir = request('dir', 'asc');
+        @endphp
+
         <div class="vehicles-table">
             <div class="vehicles-table-head">
-                <div class="col-vehicle">Vehicle</div>
+                <div class="col-vehicle sortable" data-sort="registration_number">
+                    Vehicle
+                    @if($currentSort === 'registration_number')
+                        <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                    @else
+                        <i class="fas fa-sort sort-icon"></i>
+                    @endif
+                </div>
                 <div class="col-device">Device</div>
-                <div class="col-status">Status</div>
-                <div class="col-created">Created</div>
+                <div class="col-status sortable" data-sort="status">
+                    Status
+                    @if($currentSort === 'status')
+                        <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                    @else
+                        <i class="fas fa-sort sort-icon"></i>
+                    @endif
+                </div>
+                <div class="col-created sortable" data-sort="created_at">
+                    Created
+                    @if($currentSort === 'created_at')
+                        <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                    @else
+                        <i class="fas fa-sort sort-icon"></i>
+                    @endif
+                </div>
                 <div class="col-actions">Actions</div>
             </div>
 
@@ -701,6 +750,35 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ========================================
+    // SORTABLE COLUMNS
+    // ========================================
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    const currentSort = '{{ request('sort', 'registration_number') }}';
+    const currentDir = '{{ request('dir', 'asc') }}';
+
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const sortField = this.dataset.sort;
+            let newDir = 'asc';
+
+            // Dacă e aceeași coloană, toggle direction
+            if (sortField === currentSort) {
+                newDir = currentDir === 'asc' ? 'desc' : 'asc';
+            }
+
+            // Construiește URL cu parametrii existenți + sort
+            const url = new URL(window.location.href);
+            url.searchParams.set('sort', sortField);
+            url.searchParams.set('dir', newDir);
+
+            window.location.href = url.toString();
+        });
+    });
+
+    // ========================================
+    // AUTOCOMPLETE SEARCH
+    // ========================================
     const searchInput = document.getElementById('searchInput');
     const dropdown = document.getElementById('autocompleteDropdown');
     const results = document.getElementById('autocompleteResults');

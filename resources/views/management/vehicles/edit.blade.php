@@ -53,28 +53,56 @@
 
                     <div class="form-group">
                         <label class="form-label">Registration number (plate)</label>
-                        <input type="text" name="registration_number" class="input" value="{{ old('registration_number', $vehicle->registration_number) }}" required>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" name="registration_number" id="registration_number" class="input" value="{{ old('registration_number', $vehicle->registration_number) }}" required style="flex:1;">
+                            <button type="button" id="dvla-lookup-btn" class="btn btn-light" onclick="dvlaLookup()" title="Refresh from DVLA">
+                                <i class="fas fa-sync-alt"></i> DVLA
+                            </button>
+                        </div>
+                        <p class="field-hint" id="dvla-status"></p>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Make</label>
-                            <input type="text" name="make" class="input" value="{{ old('make', $vehicle->make) }}" placeholder="Volvo, Scania, Mercedes...">
+                            <input type="text" name="make" id="make" class="input" value="{{ old('make', $vehicle->make) }}" placeholder="Volvo, Scania, Mercedes...">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Model</label>
-                            <input type="text" name="model" class="input" value="{{ old('model', $vehicle->model) }}" placeholder="FH16, R500, Actros...">
+                            <input type="text" name="model" id="model" class="input" value="{{ old('model', $vehicle->model) }}" placeholder="FH16, R500, Actros...">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Year</label>
-                            <input type="number" name="year" class="input" value="{{ old('year', $vehicle->year) }}" min="1990" max="{{ date('Y') + 1 }}">
+                            <input type="number" name="year" id="year" class="input" value="{{ old('year', $vehicle->year) }}" min="1990" max="{{ date('Y') + 1 }}">
                         </div>
                         <div class="form-group">
                             <label class="form-label">VIN</label>
-                            <input type="text" name="vin" class="input" value="{{ old('vin', $vehicle->vin) }}" maxlength="17">
+                            <input type="text" name="vin" id="vin" class="input" value="{{ old('vin', $vehicle->vin) }}" maxlength="17">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Colour</label>
+                            <input type="text" name="colour" id="colour" class="input" value="{{ old('colour', $vehicle->colour) }}" placeholder="e.g. BLUE">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fuel type</label>
+                            <input type="text" name="fuel_type" id="fuel_type" class="input" value="{{ old('fuel_type', $vehicle->fuel_type) }}" placeholder="e.g. DIESEL">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Engine capacity (cc)</label>
+                            <input type="number" name="engine_capacity" id="engine_capacity" class="input" value="{{ old('engine_capacity', $vehicle->engine_capacity) }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CO2 emissions (g/km)</label>
+                            <input type="number" name="co2_emissions" id="co2_emissions" class="input" value="{{ old('co2_emissions', $vehicle->co2_emissions) }}">
                         </div>
                     </div>
 
@@ -85,6 +113,35 @@
                             <option value="inactive" @selected(old('status', $vehicle->status) === 'inactive')>Inactive</option>
                             <option value="service" @selected(old('status', $vehicle->status) === 'service')>In service</option>
                         </select>
+                    </div>
+
+                    <h2 class="card-title" style="margin-top:16px;">MOT & Tax</h2>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">MOT status</label>
+                            <input type="text" name="mot_status" id="mot_status" class="input" value="{{ old('mot_status', $vehicle->mot_status) }}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">MOT expiry</label>
+                            <input type="date" name="mot_expiry_date" id="mot_expiry_date" class="input" value="{{ old('mot_expiry_date', $vehicle->mot_expiry_date?->format('Y-m-d')) }}">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Tax status</label>
+                            <input type="text" name="tax_status" id="tax_status" class="input" value="{{ old('tax_status', $vehicle->tax_status) }}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tax due date</label>
+                            <input type="date" name="tax_due_date" id="tax_due_date" class="input" value="{{ old('tax_due_date', $vehicle->tax_due_date?->format('Y-m-d')) }}">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Euro status</label>
+                        <input type="text" name="euro_status" id="euro_status" class="input" value="{{ old('euro_status', $vehicle->euro_status) }}" readonly>
                     </div>
                 </div>
 
@@ -245,5 +302,68 @@ $(document).ready(function() {
         allowClear: true
     });
 });
+
+async function dvlaLookup() {
+    const regInput = document.getElementById('registration_number');
+    const btn = document.getElementById('dvla-lookup-btn');
+    const status = document.getElementById('dvla-status');
+    
+    const registration = regInput.value.trim();
+    
+    if (!registration) {
+        status.textContent = 'Please enter a registration number first';
+        status.style.color = '#b91c1c';
+        return;
+    }
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Looking up...';
+    status.textContent = 'Searching DVLA database...';
+    status.style.color = '#6b7280';
+    
+    try {
+        const response = await fetch('{{ route("management.dvla.vehicle") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ registration: registration }),
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const data = result.data;
+            
+            if (data.make) document.getElementById('make').value = data.make;
+            if (data.year) document.getElementById('year').value = data.year;
+            if (data.colour) document.getElementById('colour').value = data.colour;
+            if (data.fuel_type) document.getElementById('fuel_type').value = data.fuel_type;
+            if (data.engine_capacity) document.getElementById('engine_capacity').value = data.engine_capacity;
+            if (data.co2_emissions) document.getElementById('co2_emissions').value = data.co2_emissions;
+            if (data.mot_status) document.getElementById('mot_status').value = data.mot_status;
+            if (data.mot_expiry_date) document.getElementById('mot_expiry_date').value = data.mot_expiry_date;
+            if (data.tax_status) document.getElementById('tax_status').value = data.tax_status;
+            if (data.tax_due_date) document.getElementById('tax_due_date').value = data.tax_due_date;
+            if (data.euro_status) document.getElementById('euro_status').value = data.euro_status;
+            
+            status.textContent = '✓ Data refreshed from DVLA' + (result.sandbox ? ' (Sandbox mode)' : '');
+            status.style.color = '#059669';
+        } else {
+            status.textContent = result.error || 'Vehicle not found';
+            status.style.color = '#b91c1c';
+        }
+    } catch (error) {
+        console.error('DVLA lookup error:', error);
+        status.textContent = 'Error connecting to DVLA service';
+        status.style.color = '#b91c1c';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> DVLA';
+    }
+}
 </script>
 @endsection

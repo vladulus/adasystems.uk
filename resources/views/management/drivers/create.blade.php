@@ -262,29 +262,31 @@
 
             {{-- License & assignment --}}
             <div>
-                <h2 class="form-section-title">License &amp; assignment</h2>
+                <h2 class="form-section-title">License details</h2>
 
                 <div class="field-group">
                     <label class="field-label">License number <span class="required">*</span></label>
                     <input type="text"
                            name="license_number"
+                           id="license_number"
                            class="input @error('license_number') input-error @enderror"
                            value="{{ old('license_number') }}"
-                           placeholder="e.g. B1234567"
+                           placeholder="e.g. JONES710238AB1CD"
                            required>
-                    <p class="field-help">Also used as initial login password</p>
+                    <p class="field-help">UK driving licence number (also used as initial login password)</p>
                     @error('license_number')
                         <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="field-group">
-                    <label class="field-label">License type <span class="required">*</span></label>
+                    <label class="field-label">License type/categories <span class="required">*</span></label>
                     <input type="text"
                            name="license_type"
+                           id="license_type"
                            class="input @error('license_type') input-error @enderror"
                            value="{{ old('license_type') }}"
-                           placeholder="e.g. B, C, CE"
+                           placeholder="e.g. B, C, CE, D"
                            required>
                     @error('license_type')
                         <p class="field-error">{{ $message }}</p>
@@ -296,6 +298,7 @@
                         <label class="field-label">License issue date</label>
                         <input type="date"
                                name="license_issue_date"
+                               id="license_issue_date"
                                class="input @error('license_issue_date') input-error @enderror"
                                value="{{ old('license_issue_date') }}">
                         @error('license_issue_date')
@@ -307,6 +310,7 @@
                         <label class="field-label">License expiry date</label>
                         <input type="date"
                                name="license_expiry_date"
+                               id="license_expiry_date"
                                class="input @error('license_expiry_date') input-error @enderror"
                                value="{{ old('license_expiry_date') }}">
                         @error('license_expiry_date')
@@ -314,6 +318,83 @@
                         @enderror
                     </div>
                 </div>
+
+                {{-- DVLA Verification Section --}}
+                <div class="dvla-section" style="background:#f8fafc;border-radius:10px;padding:1rem;margin-top:1rem;border:1px dashed #cbd5e1;">
+                    <h3 style="font-size:0.85rem;font-weight:600;color:#334155;margin:0 0 0.5rem;">
+                        <i class="fas fa-shield-alt" style="color:#2563eb;"></i> DVLA Verification (optional)
+                    </h3>
+                    <p class="field-help" style="margin-bottom:0.75rem;">
+                        Driver must generate a check code at <a href="https://www.gov.uk/view-driving-licence" target="_blank" style="color:#2563eb;">gov.uk/view-driving-licence</a> (valid 21 days)
+                    </p>
+                    
+                    <div class="field-grid-2">
+                        <div class="field-group">
+                            <label class="field-label">Check code</label>
+                            <input type="text"
+                                   id="dvla_check_code"
+                                   class="input"
+                                   placeholder="e.g. 8R PH KX 2D"
+                                   maxlength="16">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Last name</label>
+                            <input type="text"
+                                   id="dvla_last_name"
+                                   class="input"
+                                   placeholder="Driver's surname">
+                        </div>
+                    </div>
+                    
+                    <button type="button" 
+                            id="dvla-verify-btn"
+                            class="btn btn-secondary"
+                            onclick="dvlaVerifyDriver()"
+                            style="margin-top:0.5rem;">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Verify with DVLA</span>
+                    </button>
+                    <span id="dvla-status" class="field-help" style="margin-left:0.5rem;"></span>
+                </div>
+
+                {{-- DVLA Data Fields (read-only, populated by DVLA) --}}
+                <h2 class="form-section-title" style="margin-top:1.25rem;">DVLA Status</h2>
+
+                <div class="field-grid-2">
+                    <div class="field-group">
+                        <label class="field-label">License status</label>
+                        <input type="text"
+                               name="license_status"
+                               id="license_status"
+                               class="input"
+                               value="{{ old('license_status', 'unknown') }}"
+                               placeholder="e.g. Valid"
+                               readonly>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Penalty points</label>
+                        <input type="number"
+                               name="penalty_points"
+                               id="penalty_points"
+                               class="input"
+                               value="{{ old('penalty_points', 0) }}"
+                               min="0"
+                               max="12">
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">Disqualified until</label>
+                    <input type="date"
+                           name="disqualified_until"
+                           id="disqualified_until"
+                           class="input"
+                           value="{{ old('disqualified_until') }}">
+                    <p class="field-help">Leave empty if not disqualified</p>
+                </div>
+
+                <h2 class="form-section-title" style="margin-top:1.25rem;">Status & assignment</h2>
 
                 <div class="field-group">
                     <label class="field-label">Status</label>
@@ -362,4 +443,104 @@
         </div>
     </form>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+async function dvlaVerifyDriver() {
+    const checkCode = document.getElementById('dvla_check_code').value.replace(/\s/g, '');
+    const lastName = document.getElementById('dvla_last_name').value.trim();
+    const licenceNumber = document.getElementById('license_number').value.trim();
+    const btn = document.getElementById('dvla-verify-btn');
+    const status = document.getElementById('dvla-status');
+    
+    // Validation
+    if (!checkCode || checkCode.length !== 8) {
+        status.textContent = 'Check code must be 8 characters';
+        status.style.color = '#b91c1c';
+        return;
+    }
+    if (!lastName) {
+        status.textContent = 'Please enter driver\'s last name';
+        status.style.color = '#b91c1c';
+        return;
+    }
+    if (!licenceNumber || licenceNumber.length < 8) {
+        status.textContent = 'Please enter licence number first (min 8 characters)';
+        status.style.color = '#b91c1c';
+        return;
+    }
+    
+    // Show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Verifying...</span>';
+    status.textContent = 'Checking DVLA database...';
+    status.style.color = '#6b7280';
+    
+    try {
+        const response = await fetch('{{ route("management.dvla.driver") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                check_code: checkCode,
+                last_name: lastName,
+                licence_number: licenceNumber,
+            }),
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const data = result.data;
+            
+            // Auto-fill fields
+            if (data.license_status) document.getElementById('license_status').value = data.license_status;
+            if (data.license_type) document.getElementById('license_type').value = data.license_type;
+            if (data.license_issue_date) document.getElementById('license_issue_date').value = data.license_issue_date;
+            if (data.license_expiry_date) document.getElementById('license_expiry_date').value = data.license_expiry_date;
+            if (data.penalty_points !== undefined) document.getElementById('penalty_points').value = data.penalty_points;
+            if (data.disqualified_until) document.getElementById('disqualified_until').value = data.disqualified_until;
+            
+            // Update name if empty
+            if (data.name && !document.querySelector('input[name="name"]').value) {
+                document.querySelector('input[name="name"]').value = data.name;
+            }
+            
+            // Show success with summary
+            let summary = '✓ Verified: ' + data.license_status;
+            if (data.penalty_points > 0) {
+                summary += ' | ' + data.penalty_points + ' points';
+            }
+            status.textContent = summary;
+            status.style.color = '#059669';
+        } else {
+            status.textContent = result.error || 'Verification failed - check code may be expired';
+            status.style.color = '#b91c1c';
+        }
+    } catch (error) {
+        console.error('DVLA verify error:', error);
+        status.textContent = 'Error connecting to DVLA service';
+        status.style.color = '#b91c1c';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Verify with DVLA</span>';
+    }
+}
+
+// Auto-populate last name from name field
+document.querySelector('input[name="name"]').addEventListener('blur', function() {
+    const fullName = this.value.trim();
+    const lastNameField = document.getElementById('dvla_last_name');
+    if (fullName && !lastNameField.value) {
+        const parts = fullName.split(' ');
+        if (parts.length > 1) {
+            lastNameField.value = parts[parts.length - 1];
+        }
+    }
+});
+</script>
 @endsection

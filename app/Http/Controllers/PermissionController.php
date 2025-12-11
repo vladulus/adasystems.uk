@@ -101,39 +101,32 @@ class PermissionController extends Controller
         $currentRole = $currentUser->roles->first()?->name;
         $targetRole  = $targetUser->roles->first()?->name;
 
+        // Superuser și user NU pot edita permisiuni NICIODATĂ
+        if (in_array($currentRole, ['superuser', 'user'], true)) {
+            return false;
+        }
+
+        // De aici încolo doar super-admin și admin
+        // Trebuie să aibă permisiunea permissions.edit
+        if (!$currentUser->can('permissions.edit')) {
+            return false;
+        }
+
         // SUPER-ADMIN
         if ($currentRole === 'super-admin') {
-            // Superadminii normali NU pot atinge alți superadmini
+            // Nu poate edita alt super-admin
             if ($targetRole === 'super-admin') {
                 return false;
             }
-
-            return true; // poate edita admini, superuseri, useri
+            return true; // poate edita admin, superuser, user
         }
 
-        // ADMIN (staff ADA Systems)
+        // ADMIN
         if ($currentRole === 'admin') {
-            // poate doar superuser + user (driver)
-            if (! in_array($targetRole, ['superuser', 'user'], true)) {
-                return false;
-            }
-
-            // aici putem pune și condiția cu created_by dacă vrei mai târziu
-            return true;
+            // Poate doar superuser + user
+            return in_array($targetRole, ['superuser', 'user'], true);
         }
 
-        // SUPERUSER (client)
-        if ($currentRole === 'superuser') {
-            // poate doar driverii lui
-            if ($targetRole !== 'user') {
-                return false;
-            }
-
-            // driverul trebuie să aibă acest superuser ca parent
-            return $targetUser->parent_id === $currentUser->id;
-        }
-
-        // Driverii (user) sau alții nu pot gestiona permisiuni
         return false;
     }
 
@@ -150,7 +143,6 @@ class PermissionController extends Controller
         }
 
         $currentRole = $currentUser->roles->first()?->name;
-        $targetRole  = $targetUser->roles->first()?->name;
 
         // SUPER-ADMIN → poate da orice permisiune
         if ($currentRole === 'super-admin') {
@@ -167,14 +159,7 @@ class PermissionController extends Controller
             });
         }
 
-        // SUPERUSER → poate da DOAR ce are el, DOAR către driveri
-        if ($currentRole === 'superuser' && $targetRole === 'user') {
-            return $allPermissions->filter(function (Permission $perm) use ($own) {
-                return in_array($perm->name, $own, true);
-            });
-        }
-
-        // altcineva nu poate delega nimic
+        // Altcineva nu poate delega nimic
         return collect();
     }
 

@@ -46,9 +46,9 @@
                 @csrf
                 @method('PUT')
 
-                {{-- TOP ROW: Settings (left) | Dashboard (right) --}}
+                {{-- TOP ROW: Settings + Permissions (left) | Dashboard (right) --}}
                 <div class="permissions-row-top">
-                    {{-- LEFT COLUMN: Settings --}}
+                    {{-- LEFT COLUMN: Settings + Permissions --}}
                     <div class="permissions-col-left">
                         <div class="perm-card">
                             <div class="perm-card-header">
@@ -67,6 +67,28 @@
                                         @if(in_array('settings.access', $userPermissions)) checked @endif>
                                     <span class="checkmark"></span>
                                     <span class="perm-label">Access</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {{-- Permissions management --}}
+                        <div class="perm-card">
+                            <div class="perm-card-header">
+                                <div class="perm-icon">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
+                                <div>
+                                    <h3 class="perm-title">Permissions</h3>
+                                    <span class="perm-count">1 permission</span>
+                                </div>
+                            </div>
+
+                            <div class="perm-list">
+                                <label class="perm-item">
+                                    <input type="checkbox" name="permissions[]" value="permissions.edit"
+                                        @if(in_array('permissions.edit', $userPermissions)) checked @endif>
+                                    <span class="checkmark"></span>
+                                    <span class="perm-label">Edit</span>
                                 </label>
                             </div>
                         </div>
@@ -362,6 +384,16 @@ document.querySelector('form').addEventListener('submit', function(e) {
     .perm-card:hover {
         border-color: #a78bfa;
         background: #faf5ff;
+    }
+
+    /* Bottom row cards - align DATA SCOPE at same height */
+    .permissions-row-bottom .perm-card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .permissions-row-bottom .perm-card .perm-list {
+        flex: 1;
     }
 
     .perm-card-tall {

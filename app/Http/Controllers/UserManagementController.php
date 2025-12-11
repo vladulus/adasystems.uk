@@ -93,9 +93,31 @@ class UserManagementController extends Controller
         }
 
         // Sorting
-        $sortField = $request->get('sort', 'created_at');
-        $sortOrder = $request->get('order', 'desc');
-        $query->orderBy($sortField, $sortOrder);
+        $sortField = $request->get('sort', 'name');
+        $sortDir = $request->get('dir', 'asc');
+        
+        // Validare direcție
+        if (!in_array($sortDir, ['asc', 'desc'])) {
+            $sortDir = 'asc';
+        }
+        
+        // Validare câmpuri permise
+        $allowedSorts = ['name', 'email', 'status', 'created_at', 'last_login_at'];
+        
+        // Role sorting e special (relație)
+        if ($sortField === 'role') {
+            $query->leftJoin('model_has_roles', function($join) {
+                $join->on('users.id', '=', 'model_has_roles.model_id')
+                     ->where('model_has_roles.model_type', '=', User::class);
+            })
+            ->leftJoin('roles', 'model_has_roles.role_id', '=', 'roles.id')
+            ->select('users.*')
+            ->orderBy('roles.name', $sortDir);
+        } elseif (in_array($sortField, $allowedSorts)) {
+            $query->orderBy($sortField, $sortDir);
+        } else {
+            $query->orderBy('name', 'asc');
+        }
 
         $users = $query->paginate($request->get('per_page', 15))
             ->appends($request->except('page'));
@@ -405,12 +427,12 @@ class UserManagementController extends Controller
         // Check for dependencies
         $issues = [];
 
-        if ($user->devices()->count() > 0) {
-            $issues[] = $user->devices()->count() . ' device(s) created';
+        if ($user->ownedDevices()->count() > 0) {
+            $issues[] = $user->ownedDevices()->count() . ' device(s) created';
         }
 
-        if ($user->vehicles()->count() > 0) {
-            $issues[] = $user->vehicles()->count() . ' vehicle(s) created';
+        if ($user->ownedVehicles()->count() > 0) {
+            $issues[] = $user->ownedVehicles()->count() . ' vehicle(s) created';
         }
 
         if ($user->driver) {

@@ -64,16 +64,20 @@ class DriverController extends Controller
 
         // Sorting
         $sortField = $request->get('sort', 'name');
-        $sortOrder = $request->get('order', 'asc');
+        $sortDir = $request->get('dir', 'asc');
 
-        if (! in_array($sortField, ['name', 'status', 'created_at'], true)) {
-            $sortField = 'name';
-        }
-        if (! in_array($sortOrder, ['asc', 'desc'], true)) {
-            $sortOrder = 'asc';
+        // Validare direcție
+        if (!in_array($sortDir, ['asc', 'desc'])) {
+            $sortDir = 'asc';
         }
 
-        $query->orderBy($sortField, $sortOrder);
+        // Validare câmpuri permise
+        $allowedSorts = ['name', 'status', 'created_at', 'license_number'];
+        if (in_array($sortField, $allowedSorts)) {
+            $query->orderBy($sortField, $sortDir);
+        } else {
+            $query->orderBy('name', 'asc');
+        }
 
         $drivers = $query->paginate($request->get('per_page', 15))
             ->appends($request->except('page'));
@@ -123,6 +127,10 @@ class DriverController extends Controller
             'notes'              => ['nullable', 'string', 'max:2000'],
             'vehicle_ids'        => ['nullable', 'array'],
             'vehicle_ids.*'      => ['integer', 'exists:vehicles,id'],
+            // DVLA fields
+            'license_status'     => ['nullable', 'string', 'max:30'],
+            'penalty_points'     => ['nullable', 'integer', 'min:0', 'max:12'],
+            'disqualified_until' => ['nullable', 'date'],
         ]);
 
         // Normalize license number
@@ -165,6 +173,10 @@ class DriverController extends Controller
                 'hire_date' => $validated['hire_date'] ?? null,
                 'emergency_contact' => $validated['emergency_contact'] ?? null,
                 'notes' => $validated['notes'] ?? null,
+                // DVLA fields
+                'license_status' => $validated['license_status'] ?? 'unknown',
+                'penalty_points' => $validated['penalty_points'] ?? 0,
+                'disqualified_until' => $validated['disqualified_until'] ?? null,
             ]);
 
             // 3. Attach vehicles (many-to-many)
@@ -266,11 +278,36 @@ class DriverController extends Controller
             'vehicle_ids.*'      => ['integer', 'exists:vehicles,id'],
             'employer_ids'       => ['nullable', 'array'],
             'employer_ids.*'     => ['integer', 'exists:users,id'],
+            // DVLA fields
+            'license_status'     => ['nullable', 'string', 'max:30'],
+            'penalty_points'     => ['nullable', 'integer', 'min:0', 'max:12'],
+            'disqualified_until' => ['nullable', 'date'],
         ]);
 
         $validated['license_number'] = strtoupper($validated['license_number']);
 
-        $driver->update($validated);
+        // Prepare update data including DVLA fields
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'date_of_birth' => $validated['date_of_birth'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'license_number' => $validated['license_number'],
+            'license_type' => $validated['license_type'],
+            'license_issue_date' => $validated['license_issue_date'] ?? null,
+            'license_expiry_date' => $validated['license_expiry_date'] ?? null,
+            'status' => $validated['status'],
+            'hire_date' => $validated['hire_date'] ?? null,
+            'emergency_contact' => $validated['emergency_contact'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+            // DVLA fields
+            'license_status' => $validated['license_status'] ?? $driver->license_status,
+            'penalty_points' => $validated['penalty_points'] ?? $driver->penalty_points,
+            'disqualified_until' => $validated['disqualified_until'] ?? null,
+        ];
+
+        $driver->update($updateData);
 
         // Sync vehicles
         $driver->vehicles()->sync($validated['vehicle_ids'] ?? []);

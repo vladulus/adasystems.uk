@@ -24,6 +24,12 @@ class Driver extends Model
         'hire_date',
         'emergency_contact',
         'notes',
+        // DVLA Driver Data fields
+        'penalty_points',
+        'disqualified_until',
+        'license_status',
+        'entitlements',
+        'photo_path',
     ];
 
     protected $casts = [
@@ -31,6 +37,9 @@ class Driver extends Model
         'license_issue_date'  => 'date',
         'license_expiry_date' => 'date',
         'hire_date'           => 'date',
+        'disqualified_until'  => 'date',
+        'penalty_points'      => 'integer',
+        'entitlements'        => 'array',
     ];
 
     // =========================================================================

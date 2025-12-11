@@ -117,6 +117,7 @@
                     <li><a href="{{ route('home') }}#features">Features</a></li>
                     <li><a href="{{ route('home') }}#technology">Technology</a></li>
                     <li><a href="{{ route('home') }}#use-cases">Use Cases</a></li>
+                    <li><a href="{{ route('app.download') }}">App</a></li>
                     <li><a href="{{ route('contact.show') }}">Contact</a></li>
                 </ul>
                 <a href="{{ route('login') }}" class="cta-button">Login</a>

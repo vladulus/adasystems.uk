@@ -21,6 +21,28 @@ class Vehicle extends Model
         'year',
         'vin',
         'status',
+        // DVLA VES fields
+        'colour',
+        'fuel_type',
+        'engine_capacity',
+        'co2_emissions',
+        'tax_status',
+        'tax_due_date',
+        'mot_status',
+        'mot_expiry_date',
+        'euro_status',
+        'wheelplan',
+        'revenue_weight',
+        'first_registered_at',
+    ];
+
+    protected $casts = [
+        'tax_due_date' => 'date',
+        'mot_expiry_date' => 'date',
+        'first_registered_at' => 'date',
+        'engine_capacity' => 'integer',
+        'co2_emissions' => 'integer',
+        'revenue_weight' => 'integer',
     ];
 
     // =========================================================================

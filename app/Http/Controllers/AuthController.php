@@ -1,10 +1,7 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
 class AuthController extends Controller
 {
     /**
@@ -16,10 +13,8 @@ class AuthController extends Controller
         if (Auth::check()) {
             return redirect()->route('hub');
         }
-
         return view('login');
     }
-
     /**
      * Handle login authentication
      */
@@ -29,58 +24,58 @@ class AuthController extends Controller
             'email'    => ['required', 'email'],
             'password' => ['required'],
         ]);
-
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-
             $user = Auth::user();
-
             // Check status - prioritate status > is_active
             if ($user->status !== 'active' || !$user->is_active) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-
                 $message = match ($user->status) {
                     'inactive' => 'Your account has been deactivated. Please contact support.',
                     'pending'  => 'Your account is pending approval.',
                     default    => 'Your account is not active.',
                 };
-
                 return back()
                     ->withErrors(['email' => $message])
                     ->onlyInput('email');
             }
-
             // Update last login
             $user->update([
                 'last_login'    => now(),
                 'last_login_at' => now(),
             ]);
+            // Check for mobile app redirect
+            if ($request->input('redirect_to') === 'app.home') {
+                return redirect()->route('app.home');
+            }
 
             // DUPĂ login OK => mergem direct în HUB (fără intended pentru a evita redirect la API endpoints)
             return redirect()->route('hub');
         }
-
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ])->onlyInput('email');
     }
-
     /**
      * Handle logout
      */
     public function logout(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+        
+        // Check if coming from mobile app
+        $referer = $request->headers->get('referer');
+        if ($referer && str_contains($referer, 'app-home')) {
+            return redirect()->route('app.home');
+        }
 
         return redirect()->route('login')
             ->with('success', 'You have been logged out successfully.');
     }
-
     /**
      * Show password reset request form
      */
@@ -88,7 +83,6 @@ class AuthController extends Controller
     {
         return view('passwords.email');
     }
-
     /**
      * Handle password reset email request
      */
@@ -97,10 +91,8 @@ class AuthController extends Controller
         $request->validate([
             'email' => ['required', 'email'],
         ]);
-
         // Check if user exists
         $user = \App\Models\User::where('email', $request->email)->first();
-
         // Always show success message (security: don't reveal if email exists)
         // In production, you would send an actual email here
         
@@ -111,7 +103,6 @@ class AuthController extends Controller
             // For now, log the request
             \Log::info('Password reset requested for: ' . $request->email);
         }
-
         return back()->with('status', 'If an account exists with that email, you will receive password reset instructions shortly.');
     }
 }

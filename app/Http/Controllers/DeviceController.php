@@ -44,10 +44,22 @@ class DeviceController extends Controller
             }
         }
 
-        // sortare
-        $sortField = $request->get('sort', 'created_at');
-        $sortOrder = $request->get('order', 'desc');
-        $query->orderBy($sortField, $sortOrder);
+        // Sorting
+        $sortField = $request->get('sort', 'device_name');
+        $sortDir = $request->get('dir', 'asc');
+        
+        // Validare direcție
+        if (!in_array($sortDir, ['asc', 'desc'])) {
+            $sortDir = 'asc';
+        }
+        
+        // Validare câmpuri permise
+        $allowedSorts = ['device_name', 'serial_number', 'status', 'created_at'];
+        if (in_array($sortField, $allowedSorts)) {
+            $query->orderBy($sortField, $sortDir);
+        } else {
+            $query->orderBy('device_name', 'asc');
+        }
 
         $devices = $query->paginate($request->get('per_page', 15))
             ->appends($request->except('page'));

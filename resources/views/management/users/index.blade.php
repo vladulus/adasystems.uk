@@ -70,7 +70,7 @@
             </div>
         </form>
     </div>
-	    @if (session('error'))
+            @if (session('error'))
         <div style="margin-bottom:10px;">
             <div style="
                 display:inline-flex;
@@ -181,13 +181,53 @@
                 </span>
             </div>
 
+            @php
+                $currentSort = request('sort', 'name');
+                $currentDir = request('dir', 'asc');
+            @endphp
+
             <div class="users-table">
                 <div class="users-table-head">
-                    <div class="col-name">Name & email</div>
-                    <div class="col-role">Role</div>
-                    <div class="col-status">Status</div>
-                    <div class="col-last-login">Last login</div>
-                    <div class="col-created">Created</div>
+                    <div class="col-name sortable" data-sort="name">
+                        Name & email
+                        @if($currentSort === 'name')
+                            <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                        @else
+                            <i class="fas fa-sort sort-icon"></i>
+                        @endif
+                    </div>
+                    <div class="col-role sortable" data-sort="role">
+                        Role
+                        @if($currentSort === 'role')
+                            <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                        @else
+                            <i class="fas fa-sort sort-icon"></i>
+                        @endif
+                    </div>
+                    <div class="col-status sortable" data-sort="status">
+                        Status
+                        @if($currentSort === 'status')
+                            <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                        @else
+                            <i class="fas fa-sort sort-icon"></i>
+                        @endif
+                    </div>
+                    <div class="col-last-login sortable" data-sort="last_login_at">
+                        Last login
+                        @if($currentSort === 'last_login_at')
+                            <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                        @else
+                            <i class="fas fa-sort sort-icon"></i>
+                        @endif
+                    </div>
+                    <div class="col-created sortable" data-sort="created_at">
+                        Created
+                        @if($currentSort === 'created_at')
+                            <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                        @else
+                            <i class="fas fa-sort sort-icon"></i>
+                        @endif
+                    </div>
                     <div class="col-actions">Actions</div>
                 </div>
 
@@ -208,7 +248,7 @@
                                 $roleName = $user->roles->first()?->name;
                                 $hasDriver = $user->driverProfile;
                             @endphp
-                            
+
                             @if($hasDriver)
                                 {{-- Driver badge înlocuiește User --}}
                                 <span class="badge badge-driver">Driver</span>
@@ -280,7 +320,7 @@
                                   </form>
                               @endif
                           @endif
-                      </div>  
+                      </div>
                     </div>
                 @empty
                     <div class="users-empty">
@@ -739,6 +779,34 @@
         background: #f9fafb;
     }
 
+    .users-table-head .sortable {
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: color 0.15s;
+    }
+
+    .users-table-head .sortable:hover {
+        color: #6366f1;
+    }
+
+    .sort-icon {
+        font-size: 10px;
+        opacity: 0.4;
+        transition: opacity 0.15s;
+    }
+
+    .sort-icon.active {
+        opacity: 1;
+        color: #6366f1;
+    }
+
+    .users-table-head .sortable:hover .sort-icon {
+        opacity: 0.7;
+    }
+
     .users-table-row {
         border-top: 1px solid #f3f4f6;
         font-size: 13px;
@@ -971,22 +1039,51 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ========================================
+    // SORTABLE COLUMNS
+    // ========================================
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    const currentSort = '{{ request('sort', 'name') }}';
+    const currentDir = '{{ request('dir', 'asc') }}';
+
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const sortField = this.dataset.sort;
+            let newDir = 'asc';
+
+            // Dacă e aceeași coloană, toggle direction
+            if (sortField === currentSort) {
+                newDir = currentDir === 'asc' ? 'desc' : 'asc';
+            }
+
+            // Construiește URL cu parametrii existenți + sort
+            const url = new URL(window.location.href);
+            url.searchParams.set('sort', sortField);
+            url.searchParams.set('dir', newDir);
+
+            window.location.href = url.toString();
+        });
+    });
+
+    // ========================================
+    // AUTOCOMPLETE SEARCH
+    // ========================================
     const searchInput = document.getElementById('searchInput');
     const dropdown = document.getElementById('autocompleteDropdown');
     const results = document.getElementById('autocompleteResults');
     const spinner = document.getElementById('searchSpinner');
     const searchForm = document.getElementById('searchForm');
-    
+
     if (!searchInput) return;
-    
+
     let debounceTimer;
     let currentRequest = null;
 
     searchInput.addEventListener('input', function() {
         const query = this.value.trim();
-        
+
         clearTimeout(debounceTimer);
-        
+
         if (query.length < 2) {
             dropdown.style.display = 'none';
             return;
@@ -1058,7 +1155,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </a>
             `;
         });
-        
+
         results.innerHTML = html;
     }
 

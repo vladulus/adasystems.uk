@@ -133,12 +133,38 @@
                 @endif
             </div>
 
+            @php
+                $currentSort = request('sort', 'device_name');
+                $currentDir = request('dir', 'asc');
+            @endphp
+
             <div class="devices-table">
                 <div class="devices-table-head">
-                    <div class="col-name">Device & Serial</div>
+                    <div class="col-name sortable" data-sort="device_name">
+                        Device & Serial
+                        @if($currentSort === 'device_name')
+                            <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                        @else
+                            <i class="fas fa-sort sort-icon"></i>
+                        @endif
+                    </div>
                     <div class="col-vehicle">Vehicle</div>
-                    <div class="col-status">Status</div>
-                    <div class="col-created">Created</div>
+                    <div class="col-status sortable" data-sort="status">
+                        Status
+                        @if($currentSort === 'status')
+                            <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                        @else
+                            <i class="fas fa-sort sort-icon"></i>
+                        @endif
+                    </div>
+                    <div class="col-created sortable" data-sort="created_at">
+                        Created
+                        @if($currentSort === 'created_at')
+                            <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                        @else
+                            <i class="fas fa-sort sort-icon"></i>
+                        @endif
+                    </div>
                     <div class="col-actions">Actions</div>
                 </div>
 
@@ -149,7 +175,7 @@
                                 <i class="fas fa-microchip"></i>
                             </div>
                             <div class="device-main">
-                                <div class="device-name">{{ $device->name ?? 'Unnamed device' }}</div>
+                                <div class="device-name">{{ $device->device_name ?? 'Unnamed device' }}</div>
                                 <div class="device-meta">
                                     Serial number: {{ $device->serial_number ?? '—' }}
                                 </div>
@@ -221,31 +247,22 @@
         <div class="card overview-card">
             <h2 class="section-title">Overview</h2>
 
-            @php
-                $devStats = $stats['devices'] ?? [
-                    'total' => $devices->total() ?? 0,
-                    'active' => 0,
-                    'inactive' => 0,
-                    'maintenance' => 0,
-                ];
-            @endphp
-
             <div class="overview-grid">
                 <div class="overview-item">
                     <span class="label">Total devices</span>
-                    <span class="value">{{ $devStats['total'] }}</span>
+                    <span class="value">{{ $stats['total'] ?? 0 }}</span>
                 </div>
                 <div class="overview-item">
                     <span class="label">Active</span>
-                    <span class="value text-green">{{ $devStats['active'] }}</span>
+                    <span class="value text-green">{{ $stats['active'] ?? 0 }}</span>
                 </div>
                 <div class="overview-item">
                     <span class="label">Inactive</span>
-                    <span class="value">{{ $devStats['inactive'] }}</span>
+                    <span class="value">{{ $stats['inactive'] ?? 0 }}</span>
                 </div>
                 <div class="overview-item">
                     <span class="label">Maintenance</span>
-                    <span class="value text-orange">{{ $devStats['maintenance'] }}</span>
+                    <span class="value text-orange">{{ $stats['maintenance'] ?? 0 }}</span>
                 </div>
             </div>
         </div>
@@ -294,12 +311,6 @@
         justify-content: flex-end;
     }
 
-    .devices-search-form {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-    }
-
     .input {
         border-radius: 999px;
         border: 1px solid #e5e7eb;
@@ -313,10 +324,6 @@
     .input:focus {
         border-color: #6366f1;
         box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
-    }
-
-    .input-search {
-        min-width: 220px;
     }
 
     .btn {
@@ -645,6 +652,34 @@
         background: #f9fafb;
     }
 
+    .devices-table-head .sortable {
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: color 0.15s;
+    }
+
+    .devices-table-head .sortable:hover {
+        color: #6366f1;
+    }
+
+    .sort-icon {
+        font-size: 10px;
+        opacity: 0.4;
+        transition: opacity 0.15s;
+    }
+
+    .sort-icon.active {
+        opacity: 1;
+        color: #6366f1;
+    }
+
+    .devices-table-head .sortable:hover .sort-icon {
+        opacity: 0.7;
+    }
+
     .devices-table-row {
         border-top: 1px solid #f3f4f6;
         font-size: 13px;
@@ -823,10 +858,6 @@
             justify-content: flex-start;
         }
 
-        .devices-search-form {
-            flex: 1;
-        }
-
         .filters-grid {
             grid-template-columns: minmax(0, 1fr);
         }
@@ -851,6 +882,35 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ========================================
+    // SORTABLE COLUMNS
+    // ========================================
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    const currentSort = '{{ request('sort', 'device_name') }}';
+    const currentDir = '{{ request('dir', 'asc') }}';
+
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const sortField = this.dataset.sort;
+            let newDir = 'asc';
+
+            // Dacă e aceeași coloană, toggle direction
+            if (sortField === currentSort) {
+                newDir = currentDir === 'asc' ? 'desc' : 'asc';
+            }
+
+            // Construiește URL cu parametrii existenți + sort
+            const url = new URL(window.location.href);
+            url.searchParams.set('sort', sortField);
+            url.searchParams.set('dir', newDir);
+
+            window.location.href = url.toString();
+        });
+    });
+
+    // ========================================
+    // AUTOCOMPLETE SEARCH
+    // ========================================
     const searchInput = document.getElementById('searchInput');
     const dropdown = document.getElementById('autocompleteDropdown');
     const results = document.getElementById('autocompleteResults');

@@ -41,9 +41,22 @@ class VehicleController extends Controller
             }
         }
 
-        $sortField = $request->get('sort', 'created_at');
-        $sortOrder = $request->get('order', 'desc');
-        $query->orderBy($sortField, $sortOrder);
+        // Sorting
+        $sortField = $request->get('sort', 'registration_number');
+        $sortDir = $request->get('dir', 'asc');
+
+        // Validare direcție
+        if (!in_array($sortDir, ['asc', 'desc'])) {
+            $sortDir = 'asc';
+        }
+
+        // Validare câmpuri permise
+        $allowedSorts = ['registration_number', 'make', 'status', 'created_at'];
+        if (in_array($sortField, $allowedSorts)) {
+            $query->orderBy($sortField, $sortDir);
+        } else {
+            $query->orderBy('registration_number', 'asc');
+        }
 
         $vehicles = $query->paginate($request->get('per_page', 15))
             ->appends($request->except('page'));
@@ -77,6 +90,16 @@ class VehicleController extends Controller
             'vin'                 => ['nullable', 'string', 'max:17'],
             'status'              => ['required', 'in:active,inactive,service'],
             'device_id'           => ['nullable', 'exists:devices,id'],
+            // DVLA fields
+            'colour'              => ['nullable', 'string', 'max:50'],
+            'fuel_type'           => ['nullable', 'string', 'max:30'],
+            'engine_capacity'     => ['nullable', 'integer'],
+            'co2_emissions'       => ['nullable', 'integer'],
+            'tax_status'          => ['nullable', 'string', 'max:30'],
+            'tax_due_date'        => ['nullable', 'date'],
+            'mot_status'          => ['nullable', 'string', 'max:30'],
+            'mot_expiry_date'     => ['nullable', 'date'],
+            'euro_status'         => ['nullable', 'string', 'max:20'],
         ]);
 
         $vehicle = Vehicle::create([
@@ -88,6 +111,16 @@ class VehicleController extends Controller
             'status'              => $validated['status'],
             'device_id'           => $validated['device_id'] ?? null,
             'owner_id'            => auth()->id(),
+            // DVLA fields
+            'colour'              => $validated['colour'] ?? null,
+            'fuel_type'           => $validated['fuel_type'] ?? null,
+            'engine_capacity'     => $validated['engine_capacity'] ?? null,
+            'co2_emissions'       => $validated['co2_emissions'] ?? null,
+            'tax_status'          => $validated['tax_status'] ?? null,
+            'tax_due_date'        => $validated['tax_due_date'] ?? null,
+            'mot_status'          => $validated['mot_status'] ?? null,
+            'mot_expiry_date'     => $validated['mot_expiry_date'] ?? null,
+            'euro_status'         => $validated['euro_status'] ?? null,
         ]);
 
         if (!empty($validated['device_id'])) {
@@ -179,6 +212,16 @@ class VehicleController extends Controller
             'owner_id'   => ['nullable', 'exists:users,id'],
             'driver_ids' => ['nullable', 'array'],
             'driver_ids.*' => ['integer', 'exists:drivers,id'],
+            // DVLA fields
+            'colour'              => ['nullable', 'string', 'max:50'],
+            'fuel_type'           => ['nullable', 'string', 'max:30'],
+            'engine_capacity'     => ['nullable', 'integer'],
+            'co2_emissions'       => ['nullable', 'integer'],
+            'tax_status'          => ['nullable', 'string', 'max:30'],
+            'tax_due_date'        => ['nullable', 'date'],
+            'mot_status'          => ['nullable', 'string', 'max:30'],
+            'mot_expiry_date'     => ['nullable', 'date'],
+            'euro_status'         => ['nullable', 'string', 'max:20'],
         ]);
 
         $updateData = [
@@ -188,6 +231,16 @@ class VehicleController extends Controller
             'year'                => $validated['year'] ?? null,
             'vin'                 => $validated['vin'] ?? null,
             'status'              => $validated['status'],
+            // DVLA fields
+            'colour'              => $validated['colour'] ?? null,
+            'fuel_type'           => $validated['fuel_type'] ?? null,
+            'engine_capacity'     => $validated['engine_capacity'] ?? null,
+            'co2_emissions'       => $validated['co2_emissions'] ?? null,
+            'tax_status'          => $validated['tax_status'] ?? null,
+            'tax_due_date'        => $validated['tax_due_date'] ?? null,
+            'mot_status'          => $validated['mot_status'] ?? null,
+            'mot_expiry_date'     => $validated['mot_expiry_date'] ?? null,
+            'euro_status'         => $validated['euro_status'] ?? null,
         ];
         
         // Device și Owner: doar super-admin și admin pot modifica

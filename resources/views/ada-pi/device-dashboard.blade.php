@@ -104,12 +104,17 @@
         <div class="card card-map">
             <div class="card-header">
                 <h3><i class="fas fa-map-marker-alt"></i> Location</h3>
-                <div class="gps-coords" id="gpsCoords">
-                    @if($latestTelemetry && $latestTelemetry->hasGps())
-                        {{ number_format($latestTelemetry->latitude, 5) }}, {{ number_format($latestTelemetry->longitude, 5) }}
-                    @else
-                        No GPS data
-                    @endif
+                <div class="map-header-right">
+                    <div class="gps-coords" id="gpsCoords">
+                        @if($latestTelemetry && $latestTelemetry->hasGps())
+                            {{ number_format($latestTelemetry->latitude, 5) }}, {{ number_format($latestTelemetry->longitude, 5) }}
+                        @else
+                            No GPS data
+                        @endif
+                    </div>
+                    <button type="button" class="btn-center-map" id="btnCenterMap" title="Center on device">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
                 </div>
             </div>
             <div id="map" class="map-container"></div>
@@ -341,6 +346,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 16px;
+        flex-wrap: wrap;
     }
 
     .page-title {
@@ -355,6 +361,7 @@
         align-items: center;
         gap: 10px;
         margin-top: 6px;
+        flex-wrap: wrap;
     }
 
     .page-header-actions {
@@ -460,6 +467,7 @@
         text-decoration: none;
         transition: all 0.15s ease;
         margin-left: 8px;
+        flex-shrink: 0;
     }
 
     .btn-settings:hover {
@@ -579,6 +587,7 @@
         justify-content: center;
         color: #fff;
         font-size: 18px;
+        flex-shrink: 0;
     }
 
     .stat-value {
@@ -695,6 +704,40 @@
         font-size: 11px;
         color: #9ca3af;
         font-family: monospace;
+    }
+
+    .map-header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-center-map {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .btn-center-map:hover {
+        background: #6366f1;
+        border-color: #6366f1;
+        color: #fff;
+    }
+
+    .btn-center-map:active {
+        transform: scale(0.95);
+    }
+
+    .btn-center-map i {
+        font-size: 14px;
     }
 
     .map-container {
@@ -949,6 +992,9 @@
         font-size: 12px;
     }
 
+    /* ==========================================
+       RESPONSIVE - TABLET
+       ========================================== */
     @media (max-width: 1100px) {
         .dash-grid {
             grid-template-columns: 1fr 1fr;
@@ -970,27 +1016,171 @@
         }
     }
 
+    /* ==========================================
+       RESPONSIVE - MOBILE
+       ========================================== */
     @media (max-width: 640px) {
+        .page-wrapper {
+            padding: 16px 12px 32px;
+        }
+
+        .header-card {
+            padding: 14px 16px;
+        }
+
         .dash-grid {
             grid-template-columns: 1fr;
         }
+
         .card-map, .col-middle, .card-obd {
             grid-column: span 1;
         }
+
         .stats-row {
             grid-template-columns: 1fr;
         }
+
         .page-header {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
+            align-items: stretch;
+            gap: 14px;
         }
+
+        .page-title {
+            font-size: 20px;
+        }
+
+        .page-meta {
+            gap: 8px;
+        }
+
+        /* INTERVAL CONTROL - MOBILE FIX */
+        .interval-control {
+            width: 100%;
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            order: 2;
+        }
+
+        .interval-label {
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .interval-slider {
+            flex: 1;
+            min-width: 50px;
+            width: 100%;
+        }
+
+        .interval-value {
+            min-width: 32px;
+            text-align: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .interval-saved {
+            flex-shrink: 0;
+        }
+
+        .btn-settings {
+            margin-left: 0;
+        }
+
+        /* PAGE HEADER ACTIONS - MOBILE */
         .page-header-actions {
             width: 100%;
             justify-content: space-between;
+            order: 3;
+            flex-wrap: nowrap;
         }
+
+        .page-header-actions .btn span {
+            display: none;
+        }
+
+        .page-header-actions .btn {
+            padding: 8px 12px;
+        }
+
+        .page-header-actions .btn-secondary {
+            gap: 0;
+        }
+
         .map-container {
-            min-height: 300px;
+            min-height: 280px;
+        }
+
+        /* STAT CARDS - MOBILE */
+        .stat-card {
+            padding: 14px;
+        }
+
+        .stat-card-retention {
+            flex-wrap: wrap;
+        }
+
+        .retention-control {
+            width: 100%;
+            margin-left: 0;
+            margin-top: 10px;
+            justify-content: space-between;
+        }
+
+        .stat-value {
+            font-size: 18px;
+        }
+
+        /* PANELS - MOBILE */
+        .panel-value {
+            font-size: 14px;
+        }
+
+        .panel-item {
+            padding: 10px 12px;
+        }
+    }
+
+    /* ==========================================
+       RESPONSIVE - VERY SMALL SCREENS
+       ========================================== */
+    @media (max-width: 380px) {
+        .interval-control {
+            gap: 6px;
+            padding: 8px 10px;
+        }
+
+        .interval-label {
+            font-size: 11px;
+        }
+        
+        .interval-label i {
+            display: none;
+        }
+
+        .interval-value {
+            font-size: 12px;
+            min-width: 28px;
+        }
+
+        .btn-settings {
+            width: 28px;
+            height: 28px;
+        }
+
+        .btn-settings i {
+            font-size: 12px;
         }
     }
 </style>
@@ -1093,6 +1283,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update every 10 seconds
     setInterval(updateData, 10000);
+
+    // ============================================
+    // Center Map Button
+    // ============================================
+    const btnCenterMap = document.getElementById('btnCenterMap');
+    
+    btnCenterMap.addEventListener('click', function() {
+        const latLng = marker.getLatLng();
+        map.setView(latLng, 16, { animate: true });
+    });
 
     // ============================================
     // Upload Interval Slider

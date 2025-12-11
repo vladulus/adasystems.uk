@@ -31,4 +31,18 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | DVLA Vehicle Enquiry Service (VES) API
+    |--------------------------------------------------------------------------
+    |
+    | API for looking up UK vehicle details by registration number.
+    | Get your API key from: https://developer-portal.driver-vehicle-licensing.api.gov.uk
+    |
+    */
+    'dvla' => [
+        'api_key' => env('DVLA_API_KEY', ''),
+        'sandbox' => env('DVLA_SANDBOX', true),
+    ],
+
 ];

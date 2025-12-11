@@ -322,6 +322,29 @@
     color:#9ca3af;
     font-weight:600;
 }
+.drivers-table-head .sortable {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s;
+}
+.drivers-table-head .sortable:hover {
+    color: #6366f1;
+}
+.sort-icon {
+    font-size: 10px;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+}
+.sort-icon.active {
+    opacity: 1;
+    color: #6366f1;
+}
+.drivers-table-head .sortable:hover .sort-icon {
+    opacity: 0.7;
+}
 .drivers-table-row {
     padding:0.65rem 0.9rem;
     border-top:1px solid #f3f4f6;
@@ -575,12 +598,45 @@
             </span>
         </div>
 
+        @php
+            $currentSort = request('sort', 'name');
+            $currentDir = request('dir', 'asc');
+        @endphp
+
         <div class="drivers-table">
             <div class="drivers-table-head">
-                <div class="col-driver">Driver</div>
-                <div class="col-license">License</div>
-                <div class="col-status">Status</div>
-                <div class="col-created">Created</div>
+                <div class="col-driver sortable" data-sort="name">
+                    Driver
+                    @if($currentSort === 'name')
+                        <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                    @else
+                        <i class="fas fa-sort sort-icon"></i>
+                    @endif
+                </div>
+                <div class="col-license sortable" data-sort="license_number">
+                    License
+                    @if($currentSort === 'license_number')
+                        <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                    @else
+                        <i class="fas fa-sort sort-icon"></i>
+                    @endif
+                </div>
+                <div class="col-status sortable" data-sort="status">
+                    Status
+                    @if($currentSort === 'status')
+                        <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                    @else
+                        <i class="fas fa-sort sort-icon"></i>
+                    @endif
+                </div>
+                <div class="col-created sortable" data-sort="created_at">
+                    Created
+                    @if($currentSort === 'created_at')
+                        <i class="fas fa-sort-{{ $currentDir === 'asc' ? 'up' : 'down' }} sort-icon active"></i>
+                    @else
+                        <i class="fas fa-sort sort-icon"></i>
+                    @endif
+                </div>
                 <div class="col-actions">Actions</div>
             </div>
 
@@ -720,35 +776,6 @@
                 <div class="stat-label">On leave</div>
                 <div class="stat-value text-warning">{{ $stats['on_leave'] ?? 0 }}</div>
             </div>
-            <div class="stat-item">
-                <div class="stat-label">Terminated</div>
-                <div class="stat-value text-muted">{{ $stats['terminated'] ?? 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">With vehicle</div>
-                <div class="stat-value">{{ $stats['with_vehicles'] ?? 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">No vehicle</div>
-                <div class="stat-value">{{ $stats['without_vehicles'] ?? 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">License expired</div>
-                <div class="stat-value text-warning">{{ $stats['license_expired'] ?? 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">License expiring soon</div>
-                <div class="stat-value text-warning">{{ $stats['license_expiring_soon'] ?? 0 }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Average age</div>
-                @php $avgAge = $stats['avg_age'] ?? null; @endphp
-                <div class="stat-value">{{ $avgAge ? round($avgAge) . ' yrs' : '—' }}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Hired this year</div>
-                <div class="stat-value">{{ $stats['hired_this_year'] ?? 0 }}</div>
-            </div>
         </div>
     </div>
 </div>
@@ -758,6 +785,35 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ========================================
+    // SORTABLE COLUMNS
+    // ========================================
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    const currentSort = '{{ request('sort', 'name') }}';
+    const currentDir = '{{ request('dir', 'asc') }}';
+
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const sortField = this.dataset.sort;
+            let newDir = 'asc';
+
+            // Dacă e aceeași coloană, toggle direction
+            if (sortField === currentSort) {
+                newDir = currentDir === 'asc' ? 'desc' : 'asc';
+            }
+
+            // Construiește URL cu parametrii existenți + sort
+            const url = new URL(window.location.href);
+            url.searchParams.set('sort', sortField);
+            url.searchParams.set('dir', newDir);
+
+            window.location.href = url.toString();
+        });
+    });
+
+    // ========================================
+    // AUTOCOMPLETE SEARCH
+    // ========================================
     const searchInput = document.getElementById('searchInput');
     const dropdown = document.getElementById('autocompleteDropdown');
     const results = document.getElementById('autocompleteResults');
